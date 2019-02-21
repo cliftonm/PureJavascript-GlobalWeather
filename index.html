@@ -47,6 +47,8 @@
             <label class='label'>City:</label>
             <input id='city'></input>
             <label class='error' id='cityRequired'>Please enter a city.</label>
+            <label class='error' id='cityNotFound'>City not found!</label>
+            <label class='error' id='cityMoreThanOne'>More than one city found!</label>
         </div>
     </div>
 </div>
@@ -100,6 +102,8 @@
         static get countryRequired() { return 'countryRequired'; }
         static get areaRequired() { return 'areaRequired'; }
         static get cityRequired() { return 'cityRequired'; }
+        static get cityNotFound() { return 'cityNotFound'; }
+        static get cityMoreThanOne() { return 'cityMoreThanOne'; }
 
         static get countryId() { return '{countryId}'; }
         static get areaId() { return '{areaId}'; }
@@ -179,14 +183,18 @@
     }
 
     function verifyCities(json) {
+        let key = undefined;
+
         if (json.length == 0) {
-            // no cities found
+            showError(Constants.cityNotFound);
         } else if (json.length > 1) {
-            // more than one city found
+            showError(Constants.cityMoreThanOne);
         }
         else {
             key = json[0].Key;
         }
+
+        return key;
     }
 
     function getCities(countryId, areaId, city) {
@@ -200,7 +208,7 @@
         el.innerHTML = String.empty;
     }
 
-    function showRequired(elId, state = true) {
+    function showError(elId, state = true) {
         el(elId).style.visibility = state ? Constants.visible : Constants.hidden;
 
         return !state;
@@ -225,14 +233,14 @@
     }
 
     function onCountrySelected() {
-        showRequired(Constants.countryRequired, false);
+        showError(Constants.countryRequired, false);
         let id = el(Constants.elCountries).value;    
         LocalStore.put(Constants.cookieCountry, id);
         getAdminAreas(id);
     }
 
     function onAdminAreaSelected() {
-        showRequired(Constants.areaRequired, false);
+        showError(Constants.areaRequired, false);
         let id = el(Constants.elAdminAreas).value;
         LocalStore.put(Constants.cookieArea, id);
     }
@@ -244,15 +252,23 @@
         LocalStore.put(Constants.cookieCity, city);
         let ok = true;
 
+        // clear errors related to city being entered but not found or more than one found.
+        showError(Constants.cityNotFound, false);
+        showError(Constants.cityMoreThanOne, false);
+
         // Verify selections:
-        ok &= showRequired(Constants.countryRequired, countryId == String.empty);
-        ok &= showRequired(Constants.areaRequired, areaId == String.empty);
-        ok &= showRequired(Constants.cityRequired, city == String.empty);
+        ok &= showError(Constants.countryRequired, countryId == String.empty);
+        ok &= showError(Constants.areaRequired, areaId == String.empty);
+        ok &= showError(Constants.cityRequired, city == String.empty);
 
         if (ok) {
-            showRequired(Constants.cityRequired, false);
+            showError(Constants.cityRequired, false);
             let cities = await getCities(countryId, areaId, city);
-            verifyCities(cities.json);
+            let key = verifyCities(cities.json);
+
+            if (key !== undefined) {
+                // Get the weather!
+            }
         }
     }
 
