@@ -1,0 +1,96 @@
+<style>
+    .frame {
+        padding-top: 20px;
+        padding-left: 20px;
+    }
+
+    .label {
+        width: 100px;
+        display: inline-block;
+    }
+    
+    .vspacer {
+        padding-top: 10px;
+    }
+</style>
+
+<div class='frame'>
+    <div>
+        <label class='label'>Country:</label>
+        <select id='countries'></select>
+    </div>
+    <div class='vspacer'>
+            <label class='label'>City:</label>
+            <input id='city'></select>
+        </div>
+    </div>
+</div>
+
+<script>
+    class Constants {
+        static get appKey() { return 'dnn8EgPucAGLLpa7KVIxGRAtmvkdE4Y6'; }
+        static get countriesUrl() { return 'http://dataservice.accuweather.com/locations/v1/Countries'; }
+    }
+
+    function el(id) { return document.getElementById(id); }    
+
+    function get(api, onResponse) {
+        let xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4) {
+                if (onResponse !== undefined) {
+                    let json = JSON.parse(xhr.response);
+                    onResponse(json);
+                }
+            }
+        };
+        xhr.open("GET", api, true);
+        xhr.send();
+    }
+
+    function appendAppKey(url) {
+        return url + "?apikey=" + Constants.appKey;
+    }
+
+    function getCountries() {
+        let url = appendAppKey(Constants.countriesUrl);
+        get(url, showCountries);
+    }
+
+    function clearDropdown(el) {
+        el.innerHTML = "";
+    }
+
+    function showCountries(json) {
+        clearDropdown(el('countries'));
+        let countries = json.map(item => {return {name: item.EnglishName, id: item.ID};})
+            .sort((a, b) => {return a.name < b.name ? -1 : 1});
+        let elOptions = el('countries').options;
+        countries.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
+    }
+
+    function cityEntered() {
+        alert("Entered");
+    }
+
+    function onKey(keyCode, matchValue, callback) {
+        if (keyCode == matchValue) {
+            callback();
+        }
+    }
+
+    // let id = el('countries').value;    
+
+
+    function wireUpEvents() {
+        el('city').onkeyup = (event) => onKey(event.keyCode, 13, cityEntered);
+    }
+
+    (function initialize() {
+        wireUpEvents();
+        getCountries();
+        // document.getElementById("fp1").value = "abc";
+    })();
+    
+
+</script>
