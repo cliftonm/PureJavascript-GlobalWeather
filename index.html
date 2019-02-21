@@ -1,5 +1,16 @@
 <!-- file:///C:/projects/PureJavascript/GlobalWeather/index.html -->
 
+<!--
+
+    What I like to see in my Javascript code:
+
+    // I don't want to see any harcoded strings in the Javascript except for Constants here!
+    // The only exception is single character strings used for url path and parameter manipulation.
+    // Callback methods are archaic -- async/await is really nice here.
+    // Use template literals (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) instead of str1 + 'xyz' + str2
+
+-->
+
 <style>
     .frame {
         padding-top: 20px;
@@ -78,8 +89,6 @@
         static get emptyJSON() { return '[]'; }
     }
 
-    // I don't want to see any harcoded strings in the Javascript except for Constants here!
-    // The only exception is single character strings used for url path and parameter manipulation.
     class Constants {
         static get apiKey() { return 'dnn8EgPucAGLLpa7KVIxGRAtmvkdE4Y6'; }
         static get countriesUrl() { return 'http://dataservice.accuweather.com/locations/v1/Countries'; }
@@ -118,7 +127,6 @@
         alert(err.statusText);
     }
 
-    // Callback methods are archaic -- async/await is really nice here.
     function get(api) {
         return new Promise(resolve => {
             let xhr = new XMLHttpRequest();
@@ -149,7 +157,7 @@
     }
 
     function appendAppKey(url) {
-        return url + '?' + Constants.apiKeyName + '=' + Constants.apiKey;
+        return `${url}?${Constants.apiKeyName}=${Constants.apiKey}`;
     }
 
     async function getCountries() {
@@ -159,13 +167,13 @@
     }
 
     async function getAdminAreas(locId) {
-        let url = appendAppKey(Constants.adminAreasUrl + '/' + locId);
+        let url = appendAppKey(`${Constants.adminAreasUrl}/${locId}`);
         let areaList = await get(url);
         showAdminAreas(areaList.json);
     }
 
     function addParam(url, paramName, paramValue) {
-        url = url + '&' + paramName + '=' + paramValue;
+        url = `${url}&${paramName}=${paramValue}`;
 
         return url;
     }
@@ -185,8 +193,7 @@
         let url = appendAppKey(Constants.citySearchUrl);
         url = addParam(url, Constants.queryKey, city);
         url = url.replace(Constants.countryId, countryId).replace(Constants.areaId, areaId);
-        let cities = get(url);
-        verifyCities(cities.json);
+        return get(url);
     }
 
     function clearDropdown(el) {
@@ -230,7 +237,7 @@
         LocalStore.put(Constants.cookieArea, id);
     }
 
-    function cityEntered() {
+    async function cityEntered() {
         let countryId = el(Constants.elCountries).value;
         let areaId = el(Constants.elAdminAreas).value;
         let city = el(Constants.elCity).value;
@@ -244,7 +251,8 @@
 
         if (ok) {
             showRequired(Constants.cityRequired, false);
-            getCities(countryId, areaId, city);
+            let cities = await getCities(countryId, areaId, city);
+            verifyCities(cities.json);
         }
     }
 
