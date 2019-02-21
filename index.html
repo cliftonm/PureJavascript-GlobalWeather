@@ -75,6 +75,7 @@
 
     class String {
         static get empty() { return ''; }
+        static get emptyJSON() { return '[]'; }
     }
 
     // I don't want to see any harcoded strings in the Javascript except for Constants here!
@@ -113,14 +114,35 @@
 
     function el(id) { return document.getElementById(id); }    
 
-    // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-    // https://stackoverflow.com/a/48969580/2276361
-    // https://stackoverflow.com/a/48969554/2276361
+    function standardErrorHandler(err) {
+        alert(err.statusText);
+    }
+
+    // Callback methods are archaic -- async/await is really nice here.
     function get(api) {
         return new Promise(resolve => {
             let xhr = new XMLHttpRequest();
-            xhr.onload = () => resolve({json: JSON.parse(xhr.response), status: xhr.status});
-            xhr.onerror = () => resolve({json: {}, status: xhr.status, statusText: xhr.statusText});
+
+            xhr.onload = () => {
+                resolve({json: JSON.parse(xhr.response), status: xhr.status});
+            };
+
+            /*
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState == 4) { 
+                    alert(xhr.status);
+                }
+            };
+            */
+
+            xhr.onerror = () => { 
+                resolve({json: JSON.parse(String.emptyJSON), status: xhr.status, statusText: xhr.statusText});
+
+                if (xhr.statusText != String.empty) {
+                    standardErrorHandler({status: xhr.status, statusText: xhr.statusText});
+                }
+            };
+
             xhr.open(Constants.restGET, api, true);
             xhr.send();
         });
@@ -244,7 +266,13 @@
         let city = LocalStore.get(Constants.cookieCity);
     }
 
+    function initializeElements() {
+        let elOptions = el(Constants.elAdminAreas).options;
+        elOptions[0] = new Option(Constants.selectArea, String.empty);
+    }
+
     (function initialize() {
+        initializeElements();
         wireUpEvents();
         getCountries();
         usePreviousSettings();
