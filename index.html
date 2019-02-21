@@ -116,34 +116,30 @@
     // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
     // https://stackoverflow.com/a/48969580/2276361
     // https://stackoverflow.com/a/48969554/2276361
-    function get(api, onResponse) {
-        let xhr = new XMLHttpRequest();
-
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4) {
-                if (onResponse !== undefined) {
-                    let json = JSON.parse(xhr.response);
-                    onResponse(json);
-                }
-            }
-        };
-
-        xhr.open(Constants.restGET, api, true);
-        xhr.send();
+    function get(api) {
+        return new Promise(resolve => {
+            let xhr = new XMLHttpRequest();
+            xhr.onload = () => resolve({json: JSON.parse(xhr.response), status: xhr.status});
+            xhr.onerror = () => resolve({json: {}, status: xhr.status, statusText: xhr.statusText});
+            xhr.open(Constants.restGET, api, true);
+            xhr.send();
+        });
     }
 
     function appendAppKey(url) {
         return url + '?' + Constants.apiKeyName + '=' + Constants.apiKey;
     }
 
-    function getCountries() {
+    async function getCountries() {
         let url = appendAppKey(Constants.countriesUrl);
-        get(url, showCountries);
+        let countryList = await get(url);
+        showCountries(countryList.json);
     }
 
-    function getAdminAreas(locId) {
+    async function getAdminAreas(locId) {
         let url = appendAppKey(Constants.adminAreasUrl + '/' + locId);
-        get(url, showAdminAreas);
+        let areaList = await get(url);
+        showAdminAreas(areaList.json);
     }
 
     function addParam(url, paramName, paramValue) {
@@ -167,7 +163,8 @@
         let url = appendAppKey(Constants.citySearchUrl);
         url = addParam(url, Constants.queryKey, city);
         url = url.replace(Constants.countryId, countryId).replace(Constants.areaId, areaId);
-        get(url, verifyCities);
+        let cities = get(url);
+        verifyCities(cities.json);
     }
 
     function clearDropdown(el) {
