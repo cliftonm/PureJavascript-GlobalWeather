@@ -1,3 +1,5 @@
+<!-- file:///C:/projects/PureJavascript/GlobalWeather/index.html -->
+
 <style>
     .frame {
         padding-top: 20px;
@@ -39,11 +41,51 @@
 </div>
 
 <script>
+    class Cookies {
+        // functions modified from https://www.w3schools.com/js/js_cookies.asp
+        // Also see: // https://github.com/js-cookie/js-cookie/blob/master/src/js.cookie.js
+        // Chrome doesn't save cookies from local pages (from file system): https://stackoverflow.com/questions/8105135/cannot-set-cookies-in-javascript
+        static put(name, value, expdays = 7) {
+            let d = new Date();
+            d.setTime(d.getTime() + (expdays * 24 * 60 * 60 * 1000));
+            document.cookie = name + "=" + value + ";expires=" + d.toUTCString() + ";path=/";
+        }        
+
+        static get(name) {
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let cookies = decodedCookie.split(';');
+            let mappedCookies = cookies.map(c=> { return {name:c.split('=')[0], value:c.split('=')[1]}; });
+            let filteredCookies = mappedCookies.filter(c => {return c.name == name; });
+            let value = filteredCookies.length == 1 ? filteredCookies[0] : String.empty;
+
+            return value;
+        }
+    }
+
+    // Use HTML Web Storage because cookies don't work from local pages (file system)
+    class LocalStore {
+        static put(name, value) {
+            window.localStorage.setItem(name, value);
+        }
+
+        static get (name) {
+            return window.localStorage.getItem(name);
+        }
+    }
+
+    class String {
+        static get empty() { return ''; }
+    }
+
+    // I don't want to see any harcoded strings in the Javascript except for Constants here!
+    // The only exception is single character strings used for url path and parameter manipulation.
     class Constants {
         static get apiKey() { return 'dnn8EgPucAGLLpa7KVIxGRAtmvkdE4Y6'; }
         static get countriesUrl() { return 'http://dataservice.accuweather.com/locations/v1/Countries'; }
         static get adminAreasUrl() { return 'http://dataservice.accuweather.com/locations/v1/adminareas/'; }
         static get citySearchUrl() { return 'http://dataservice.accuweather.com/locations/v1/cities/{countryId}/{areaId}/search' }
+        static get queryKey() { return 'q'; }
+        static get apiKeyName() { return 'apikey'; }
 
         static get countryRequired() { return 'countryRequired'; }
         static get areaRequired() { return 'areaRequired'; }
@@ -51,10 +93,29 @@
 
         static get countryId() { return '{countryId}'; }
         static get areaId() { return '{areaId}'; }
+
+        static get cookieCountry() {return 'gwcountry'; }
+        static get cookieArea() { return 'gwarea'; }
+        static get cookieCity() { return 'gwcity'; }
+
+        static get selectCountry() { return '--- Select Country ---'; }
+        static get selectArea() { return '--- Select Area ---'; }
+
+        static get visible() { return 'visible'; }
+        static get hidden() { return 'hidden'; }
+
+        static get elCountries() {return 'countries'; }
+        static get elAdminAreas() { return 'adminAreas'; }
+        static get elCity() { return 'city'; }
+
+        static get restGET() { return 'GET'; }
     }
 
     function el(id) { return document.getElementById(id); }    
 
+    // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+    // https://stackoverflow.com/a/48969580/2276361
+    // https://stackoverflow.com/a/48969554/2276361
     function get(api, onResponse) {
         let xhr = new XMLHttpRequest();
 
@@ -67,12 +128,12 @@
             }
         };
 
-        xhr.open("GET", api, true);
+        xhr.open(Constants.restGET, api, true);
         xhr.send();
     }
 
     function appendAppKey(url) {
-        return url + "?apikey=" + Constants.apiKey;
+        return url + '?' + Constants.apiKeyName + '=' + Constants.apiKey;
     }
 
     function getCountries() {
@@ -81,12 +142,12 @@
     }
 
     function getAdminAreas(locId) {
-        let url = appendAppKey(Constants.adminAreasUrl + "/" + locId);
+        let url = appendAppKey(Constants.adminAreasUrl + '/' + locId);
         get(url, showAdminAreas);
     }
 
     function addParam(url, paramName, paramValue) {
-        url = url + "&" + paramName + "=" + paramValue;
+        url = url + '&' + paramName + '=' + paramValue;
 
         return url;
     }
@@ -104,61 +165,63 @@
 
     function getCities(countryId, areaId, city) {
         let url = appendAppKey(Constants.citySearchUrl);
-        url = addParam(url, 'q', city);
+        url = addParam(url, Constants.queryKey, city);
         url = url.replace(Constants.countryId, countryId).replace(Constants.areaId, areaId);
         get(url, verifyCities);
     }
 
     function clearDropdown(el) {
-        el.innerHTML = "";
+        el.innerHTML = String.empty;
+    }
+
+    function showRequired(elId, state = true) {
+        el(elId).style.visibility = state ? Constants.visible : Constants.hidden;
+
+        return !state;
     }
 
     function showCountries(json) {
-        clearDropdown(el('countries'));
+        clearDropdown(el(Constants.elCountries));
         let countries = json.map(item => {return {name: item.EnglishName, id: item.ID};})
             .sort((a, b) => {return a.name < b.name ? -1 : 1});
-        let elOptions = el('countries').options;
-        elOptions[0] = new Option('--- Select Country ---', '');
+        let elOptions = el(Constants.elCountries).options;
+        elOptions[0] = new Option(Constants.selectCountry, String.empty);
         countries.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
     }
 
     function showAdminAreas(json) {
-        clearDropdown(el('adminAreas'));
+        clearDropdown(el(Constants.elAdminAreas));
         let areas = json.map(item => {return {name: item.EnglishName, id: item.ID};})
             .sort((a, b) => {return a.name < b.name ? -1 : 1});
-        let elOptions = el('adminAreas').options;            
-        elOptions[0] = new Option('--- Select Area ---', '');
+        let elOptions = el(Constants.elAdminAreas).options;            
+        elOptions[0] = new Option(Constants.selectArea, String.empty);
         areas.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
     }
 
     function onCountrySelected() {
         showRequired(Constants.countryRequired, false);
-        let id = el('countries').value;    
+        let id = el(Constants.elCountries).value;    
+        LocalStore.put(Constants.cookieCountry, id);
         getAdminAreas(id);
     }
 
     function onAdminAreaSelected() {
         showRequired(Constants.areaRequired, false);
-        let locid = el('countries').value;    
-        let id = el('adminAreas').value;
-    }
-
-    function showRequired(elId, state = true) {
-        el(elId).style.visibility = state ? 'visible' : 'hidden';
-
-        return !state;
+        let id = el(Constants.elAdminAreas).value;
+        LocalStore.put(Constants.cookieArea, id);
     }
 
     function cityEntered() {
-        let countryId = el('countries').value;
-        let areaId = el('adminAreas').value;
-        let city = el('city').value;
+        let countryId = el(Constants.elCountries).value;
+        let areaId = el(Constants.elAdminAreas).value;
+        let city = el(Constants.elCity).value;
+        LocalStore.put(Constants.cookieCity, city);
         let ok = true;
 
         // Verify selections:
-        ok &= showRequired(Constants.countryRequired, countryId == '');
-        ok &= showRequired(Constants.areaRequired, areaId == '');
-        ok &= showRequired(Constants.cityRequired, city == '');
+        ok &= showRequired(Constants.countryRequired, countryId == String.empty);
+        ok &= showRequired(Constants.areaRequired, areaId == String.empty);
+        ok &= showRequired(Constants.cityRequired, city == String.empty);
 
         if (ok) {
             showRequired(Constants.cityRequired, false);
@@ -173,14 +236,21 @@
     }
 
     function wireUpEvents() {
-        el('countries').onchange = onCountrySelected;
-        el('adminAreas').onchange = onAdminAreaSelected;
-        el('city').onkeyup = (event) => onKey(event.keyCode, 13, cityEntered);
+        el(Constants.elCountries).onchange = onCountrySelected;
+        el(Constants.elAdminAreas).onchange = onAdminAreaSelected;
+        el(Constants.elCity).onkeyup = (event) => onKey(event.keyCode, 13, cityEntered);
+    }
+
+    function usePreviousSettings() {
+        let countryId = LocalStore.get(Constants.cookieCountry);
+        let areaId = LocalStore.get(Constants.cookieArea);
+        let city = LocalStore.get(Constants.cookieCity);
     }
 
     (function initialize() {
         wireUpEvents();
         getCountries();
+        usePreviousSettings();
     })();
     
 
