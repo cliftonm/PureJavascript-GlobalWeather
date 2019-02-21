@@ -12,30 +12,52 @@
     .vspacer {
         padding-top: 10px;
     }
+
+    .error {
+        color: red;
+        visibility: hidden;
+    }
 </style>
 
 <div class='frame'>
     <div>
         <label class='label'>Country:</label>
         <select id='countries'></select>
+        <label class='error' id='countryRequired'>Please select a country.</label>
     </div>
     <div class='vspacer'>
+            <label class='label'>Admin Area:</label>
+            <select id='adminAreas'></select>
+            <label class='error' id='areaRequired'>Please select an area.</label>
+        </div>
+    <div class='vspacer'>
             <label class='label'>City:</label>
-            <input id='city'></select>
+            <input id='city'></input>
+            <label class='error' id='cityRequired'>Please enter a city.</label>
         </div>
     </div>
 </div>
 
 <script>
     class Constants {
-        static get appKey() { return 'dnn8EgPucAGLLpa7KVIxGRAtmvkdE4Y6'; }
+        static get apiKey() { return 'dnn8EgPucAGLLpa7KVIxGRAtmvkdE4Y6'; }
         static get countriesUrl() { return 'http://dataservice.accuweather.com/locations/v1/Countries'; }
+        static get adminAreasUrl() { return 'http://dataservice.accuweather.com/locations/v1/adminareas/'; }
+        static get citySearchUrl() { return 'http://dataservice.accuweather.com/locations/v1/cities/{countryId}/{areaId}/search' }
+
+        static get countryRequired() { return 'countryRequired'; }
+        static get areaRequired() { return 'areaRequired'; }
+        static get cityRequired() { return 'cityRequired'; }
+
+        static get countryId() { return '{countryId}'; }
+        static get areaId() { return '{areaId}'; }
     }
 
     function el(id) { return document.getElementById(id); }    
 
     function get(api, onResponse) {
         let xhr = new XMLHttpRequest();
+
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4) {
                 if (onResponse !== undefined) {
@@ -44,17 +66,47 @@
                 }
             }
         };
+
         xhr.open("GET", api, true);
         xhr.send();
     }
 
     function appendAppKey(url) {
-        return url + "?apikey=" + Constants.appKey;
+        return url + "?apikey=" + Constants.apiKey;
     }
 
     function getCountries() {
         let url = appendAppKey(Constants.countriesUrl);
         get(url, showCountries);
+    }
+
+    function getAdminAreas(locId) {
+        let url = appendAppKey(Constants.adminAreasUrl + "/" + locId);
+        get(url, showAdminAreas);
+    }
+
+    function addParam(url, paramName, paramValue) {
+        url = url + "&" + paramName + "=" + paramValue;
+
+        return url;
+    }
+
+    function verifyCities(json) {
+        if (json.length == 0) {
+            // no cities found
+        } else if (json.length > 1) {
+            // more than one city found
+        }
+        else {
+            key = json[0].Key;
+        }
+    }
+
+    function getCities(countryId, areaId, city) {
+        let url = appendAppKey(Constants.citySearchUrl);
+        url = addParam(url, 'q', city);
+        url = url.replace(Constants.countryId, countryId).replace(Constants.areaId, areaId);
+        get(url, verifyCities);
     }
 
     function clearDropdown(el) {
@@ -66,11 +118,52 @@
         let countries = json.map(item => {return {name: item.EnglishName, id: item.ID};})
             .sort((a, b) => {return a.name < b.name ? -1 : 1});
         let elOptions = el('countries').options;
+        elOptions[0] = new Option('--- Select Country ---', '');
         countries.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
     }
 
+    function showAdminAreas(json) {
+        clearDropdown(el('adminAreas'));
+        let areas = json.map(item => {return {name: item.EnglishName, id: item.ID};})
+            .sort((a, b) => {return a.name < b.name ? -1 : 1});
+        let elOptions = el('adminAreas').options;            
+        elOptions[0] = new Option('--- Select Area ---', '');
+        areas.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
+    }
+
+    function onCountrySelected() {
+        showRequired(Constants.countryRequired, false);
+        let id = el('countries').value;    
+        getAdminAreas(id);
+    }
+
+    function onAdminAreaSelected() {
+        showRequired(Constants.areaRequired, false);
+        let locid = el('countries').value;    
+        let id = el('adminAreas').value;
+    }
+
+    function showRequired(elId, state = true) {
+        el(elId).style.visibility = state ? 'visible' : 'hidden';
+
+        return !state;
+    }
+
     function cityEntered() {
-        alert("Entered");
+        let countryId = el('countries').value;
+        let areaId = el('adminAreas').value;
+        let city = el('city').value;
+        let ok = true;
+
+        // Verify selections:
+        ok &= showRequired(Constants.countryRequired, countryId == '');
+        ok &= showRequired(Constants.areaRequired, areaId == '');
+        ok &= showRequired(Constants.cityRequired, city == '');
+
+        if (ok) {
+            showRequired(Constants.cityRequired, false);
+            getCities(countryId, areaId, city);
+        }
     }
 
     function onKey(keyCode, matchValue, callback) {
@@ -79,17 +172,15 @@
         }
     }
 
-    // let id = el('countries').value;    
-
-
     function wireUpEvents() {
+        el('countries').onchange = onCountrySelected;
+        el('adminAreas').onchange = onAdminAreaSelected;
         el('city').onkeyup = (event) => onKey(event.keyCode, 13, cityEntered);
     }
 
     (function initialize() {
         wireUpEvents();
         getCountries();
-        // document.getElementById("fp1").value = "abc";
     })();
     
 
