@@ -2,6 +2,10 @@
 
 <!--
 
+    Non-Angular, .NET Core version of:
+    https://www.codeproject.com/Articles/1274513/Angular-7-with-NET-Core-2-2-Global-Weather-Part-1
+    https://www.codeproject.com/Articles/1276248/Angular-7-with-NET-Core-2-2-Global-Weather-Part-2
+
     What I like to see in my Javascript code:
 
     // I don't want to see any harcoded strings in the Javascript except for Constants here!
@@ -46,6 +50,18 @@
     .hidden {
         visibility: hidden;
     }
+
+    .colDayOfWeek {
+        width:100px;
+    }
+
+    .colIcon {
+        width:150px;
+    }
+
+    .fixed-layout {
+        table-layout: fixed;
+    }
 </style>
 
 <div class='frame'>
@@ -71,13 +87,13 @@
 </div>
 
 <div class='hidden' id='forecastTemplate'>
-    <table class='vspacer20'>
+    <table class='vspacer20 fixed-layout'>
         <tbody>
             <tr>
-                <td>
+                <td class='colDayOfWeek'>
                     <label id='dow{n}'></label>
                 </td>
-                <td>
+                <td class='colIcon'>
                     <img id='icon{n}'/>
                 </td>
                 <td>
@@ -206,14 +222,6 @@
             xhr.onload = () => {
                 resolve({json: JSON.parse(xhr.response), status: xhr.status});
             };
-
-            /*
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState == 4) { 
-                    alert(xhr.status);
-                }
-            };
-            */
 
             xhr.onerror = () => { 
                 resolve({json: JSON.parse(String.emptyJSON), status: xhr.status, statusText: xhr.statusText});
