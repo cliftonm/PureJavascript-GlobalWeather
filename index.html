@@ -30,6 +30,27 @@
         color: red;
         visibility: hidden;
     }
+
+    .dayForecast {
+        padding-top: 10px;
+    }
+
+    .inline {
+        display: inline-block;
+    }
+
+    .small-font {
+        font-size: small;
+    }
+
+    .hidden {
+        visibility: hidden;
+    }
+
+    .center-div {
+        margin: 0 auto;
+        width: 100px; 
+    }    
 </style>
 
 <div class='frame'>
@@ -49,6 +70,23 @@
             <label class='error' id='cityRequired'>Please enter a city.</label>
             <label class='error' id='cityNotFound'>City not found!</label>
             <label class='error' id='cityMoreThanOne'>More than one city found!</label>
+        </div>
+    </div>
+
+    <div class='dayForecast' id='forecastContainer'>
+    </div>
+
+    <div class='hidden' id='forecastTemplate'>
+        <div>
+            <label class='inline;' id='dow{n}'></label>
+            <img id='icon{n}'/>
+            <div class='inline'>
+                <label class='inline; small-font'>High:</label>
+                <label class='small-font' id='maxTemp{n}'></label>
+            <div>
+                <label class='inline; small-font'>Low:</label>
+                <label class='small-font' id='minTemp{n}'></label>
+            </div>
         </div>
     </div>
 </div>
@@ -89,6 +127,17 @@
     class String {
         static get empty() { return ''; }
         static get emptyJSON() { return '[]'; }
+        static get true() { return 'true'; }
+
+        static isNullOrEmpty(str) { return str == null || str == ''; }
+
+        static escapeRegExp(str) {
+            return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+        }        
+
+        static replaceAll(str, find, replace) {
+            return str.replace(new RegExp(String.escapeRegExp(find), 'g'), replace);        
+        }
     }
 
     class Constants {
@@ -96,7 +145,10 @@
         static get countriesUrl() { return 'http://dataservice.accuweather.com/locations/v1/Countries'; }
         static get adminAreasUrl() { return 'http://dataservice.accuweather.com/locations/v1/adminareas/'; }
         static get citySearchUrl() { return 'http://dataservice.accuweather.com/locations/v1/cities/{countryId}/{areaId}/search' }
+        static get weatherFiveDayForecastUrl() { return 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/'; }
+        static get iconUrl() { return 'https://developer.accuweather.com/sites/default/files/'; }
         static get queryKey() { return 'q'; }
+        static get details() {return 'details'; }
         static get apiKeyName() { return 'apikey'; }
 
         static get countryRequired() { return 'countryRequired'; }
@@ -111,6 +163,7 @@
         static get cookieCountry() {return 'gwcountry'; }
         static get cookieArea() { return 'gwarea'; }
         static get cookieCity() { return 'gwcity'; }
+        static get cookieCityKey() { return 'gwcitykey'; }
 
         static get selectCountry() { return '--- Select Country ---'; }
         static get selectArea() { return '--- Select Area ---'; }
@@ -232,11 +285,11 @@
         areas.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
     }
 
-    function onCountrySelected() {
+    async function onCountrySelected() {
         showError(Constants.countryRequired, false);
         let id = el(Constants.elCountries).value;    
         LocalStore.put(Constants.cookieCountry, id);
-        getAdminAreas(id);
+        await getAdminAreas(id);
     }
 
     function onAdminAreaSelected() {
@@ -267,7 +320,8 @@
             let key = verifyCities(cities.json);
 
             if (key !== undefined) {
-                // Get the weather!
+                LocalStore.put(Constants.cookieCityKey, key);
+                getWeather(key);
             }
         }
     }
@@ -288,6 +342,60 @@
         let countryId = LocalStore.get(Constants.cookieCountry);
         let areaId = LocalStore.get(Constants.cookieArea);
         let city = LocalStore.get(Constants.cookieCity);
+        let cityKey = LocalStore.get(Constants.cookieCityKey);
+
+        if (!String.isNullOrEmpty(countryId)) {
+            el(Constants.elCountries).value = countryId;
+            onCountrySelected().then(() =>
+            {
+                if (!String.isNullOrEmpty(areaId)) {
+                    el(Constants.elAdminAreas).value = areaId;
+                }
+            });
+        }
+
+        if (!String.isNullOrEmpty(city)) {
+            el(Constants.elCity).value = city;
+        }
+
+        if (!String.isNullOrEmpty(cityKey)) {
+            getWeather(cityKey);
+        }
+    }
+
+    async function getWeather(key) {
+        let url = appendAppKey(`${Constants.weatherFiveDayForecastUrl}/${key}`);
+        url = addParam(url, Constants.details, String.true);
+        let forecast = await get(url);
+        let dailyForecasts = forecast.json.DailyForecasts;
+        let elForecast = el('forecast');
+        el('forecastContainer').innerHTML = String.empty;
+
+        dailyForecasts.forEach((forecast, idx) => {
+            let date = forecast.Date;
+            let dayOfWeek = new Date(date).toLocaleString('en-us', {  weekday: 'long' });
+            let minTemp = forecast.Temperature.Minimum.Value + ' ' + forecast.Temperature.Minimum.Unit;
+            let maxTemp = forecast.Temperature.Maximum.Value + ' ' + forecast.Temperature.Maximum.Unit;
+            let icon = forecast.Day.Icon;
+            let descr = forecast.Day.LongPhrase;
+            let windSpeed = forecast.Day.Wind.Speed.Value + ' ' + forecast.Day.Wind.Speed.Unit;
+            let windDirection = forecast.Day.Wind.Direction.Localized;
+            let windGust = forecast.Day.WindGust.Speed.Value + ' ' + forecast.Day.WindGust.Speed.Unit;
+            let windGustDirection = forecast.Day.WindGust.Direction.Localized;
+            let rain = forecast.Day.Rain.Value + ' ' + forecast.Day.Rain.Unit;
+            let snow = forecast.Day.Snow.Value + ' ' + forecast.Day.Snow.Unit;
+            let ice = forecast.Day.Ice.Value + ' ' + forecast.Day.Ice.Unit;
+            let formattedIcon = parseInt(icon).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
+            let iconUrl = `${Constants.iconUrl}${formattedIcon}-s.png`;           // Ex: 01-s.png
+
+            let elForecastHtml = el('forecastTemplate').innerHTML;
+            elForecastHtml = String.replaceAll(elForecastHtml, '{n}', idx);
+            el('forecastContainer').innerHTML += elForecastHtml;
+            el(`dow${idx}`).innerHTML = dayOfWeek;
+            el(`icon${idx}`).src = iconUrl;
+            el(`minTemp${idx}`).innerHTML = minTemp;
+            el(`maxTemp${idx}`).innerHTML = maxTemp;
+        });
     }
 
     function initializeElements() {
@@ -298,8 +406,7 @@
     (function initialize() {
         initializeElements();
         wireUpEvents();
-        getCountries();
-        usePreviousSettings();
+        getCountries().then(usePreviousSettings);
     })();
     
 
