@@ -73,21 +73,34 @@
         </div>
     </div>
 
-    <div class='dayForecast' id='forecastContainer'>
-    </div>
-
+    <table id='forecastContainer'>
+    </table>
+    
     <div class='hidden' id='forecastTemplate'>
-        <div>
-            <label class='inline;' id='dow{n}'></label>
-            <img id='icon{n}'/>
-            <div class='inline'>
-                <label class='inline; small-font'>High:</label>
-                <label class='small-font' id='maxTemp{n}'></label>
-            <div>
-                <label class='inline; small-font'>Low:</label>
-                <label class='small-font' id='minTemp{n}'></label>
-            </div>
-        </div>
+        <table>
+            <tbody>
+                <tr>
+                    <td>
+                        <label class='inline;' id='dow{n}'></label>
+                    </td>
+                    <td>
+                        <img id='icon{n}'/>
+                    </td>
+                    <td>
+                        <div>
+                            <label class='inline; small-font'>High:</label>
+                            <label class='small-font' id='maxTemp{n}'></label>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <label class='inline; small-font'>Low:</label>
+                            <label class='small-font' id='minTemp{n}'></label>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -368,7 +381,6 @@
         url = addParam(url, Constants.details, String.true);
         let forecast = await get(url);
         let dailyForecasts = forecast.json.DailyForecasts;
-        let elForecast = el('forecast');
         el('forecastContainer').innerHTML = String.empty;
 
         dailyForecasts.forEach((forecast, idx) => {
@@ -393,8 +405,8 @@
             el('forecastContainer').innerHTML += elForecastHtml;
             el(`dow${idx}`).innerHTML = dayOfWeek;
             el(`icon${idx}`).src = iconUrl;
-            el(`minTemp${idx}`).innerHTML = minTemp;
-            el(`maxTemp${idx}`).innerHTML = maxTemp;
+            // el(`minTemp${idx}`).innerHTML = minTemp;
+            // el(`maxTemp${idx}`).innerHTML = maxTemp;
         });
     }
 
