@@ -64,63 +64,67 @@
     }
 </style>
 
-<div class='frame'>
-    <div>
-        <label class='label'>Country:</label>
-        <select id='countries'></select>
-        <label class='error' id='countryRequired'>Please select a country.</label>
-    </div>
-    <div class='vspacer10'>
-        <label class='label'>Admin Area:</label>
-        <select id='adminAreas'></select>
-        <label class='error' id='areaRequired'>Please select an area.</label>
-    </div>
-    <div class='vspacer10'>
-        <label class='label'>City / Town:</label>
-        <input id='city'></input>
-        <label class='error' id='cityRequired'>Please enter a city.</label>
-        <label class='error' id='cityNotFound'>City not found!</label>
-        <label class='error' id='cityMoreThanOne'>More than one city found!</label>
-    </div>
-    <div id='forecastContainer'>
-    </div>
-</div>
+<html>
+    <body>
+        <div class='frame'>
+            <div>
+                <label class='label'>Country:</label>
+                <select id='countries'></select>
+                <label class='error' id='countryRequired'>Please select a country.</label>
+            </div>
+            <div class='vspacer10'>
+                <label class='label'>Admin Area:</label>
+                <select id='adminAreas'></select>
+                <label class='error' id='areaRequired'>Please select an area.</label>
+            </div>
+            <div class='vspacer10'>
+                <label class='label'>City / Town:</label>
+                <input id='city'></input>
+                <label class='error' id='cityRequired'>Please enter a city.</label>
+                <label class='error' id='cityNotFound'>City not found!</label>
+                <label class='error' id='cityMoreThanOne'>More than one city found!</label>
+            </div>
+            <div id='forecastContainer'>
+            </div>
+        </div>
 
-<div class='hidden' id='forecastTemplate'>
-    <table class='vspacer20 fixed-layout'>
-        <tbody>
-            <tr>
-                <td class='colDayOfWeek'>
-                    <label id='dow{n}'></label>
-                </td>
-                <td class='colIcon'>
-                    <img id='icon{n}'/>
-                </td>
-                <td>
-                    <label id='descr{n}'></label>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label class='small-font'>High:</label>
-                    <label class='small-font' id='maxTemp{n}'></label>
-                    </br>
-                    <label class='small-font'>Low:</label>
-                    <label class='small-font' id='minTemp{n}'></label>
-                </td>
-                <td>
-                    <label class='small-font'>Wind:</label>
-                    <label class='small-font' id='windSpeed{n}'></label>
-                    <label class='small-font' id='windDir{n}'></label>
-                    </br>
-                    <label class='small-font'>Gusts:</label>
-                    <label class='small-font' id='gustSpeed{n}'></label>
-                    <label class='small-font' id='gustDir{n}'></label>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+        <div class='hidden' id='forecastTemplate'>
+            <table class='vspacer20 fixed-layout'>
+                <tbody>
+                    <tr>
+                        <td class='colDayOfWeek'>
+                            <label id='dow{n}'></label>
+                        </td>
+                        <td class='colIcon'>
+                            <img id='icon{n}'/>
+                        </td>
+                        <td>
+                            <label id='descr{n}'></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label class='small-font'>High:</label>
+                            <label class='small-font' id='maxTemp{n}'></label>
+                            </br>
+                            <label class='small-font'>Low:</label>
+                            <label class='small-font' id='minTemp{n}'></label>
+                        </td>
+                        <td>
+                            <label class='small-font'>Wind:</label>
+                            <label class='small-font' id='windSpeed{n}'></label>
+                            <label class='small-font' id='windDir{n}'></label>
+                            </br>
+                            <label class='small-font'>Gusts:</label>
+                            <label class='small-font' id='gustSpeed{n}'></label>
+                            <label class='small-font' id='gustDir{n}'></label>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>
 
 <script>
     class Cookies {
