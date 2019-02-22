@@ -22,8 +22,12 @@
         display: inline-block;
     }
     
-    .vspacer {
+    .vspacer10 {
         padding-top: 10px;
+    }
+
+    .vspacer20 {
+        padding-top: 20px;
     }
 
     .error {
@@ -35,10 +39,6 @@
         padding-top: 10px;
     }
 
-    .inline {
-        display: inline-block;
-    }
-
     .small-font {
         font-size: small;
     }
@@ -46,11 +46,6 @@
     .hidden {
         visibility: hidden;
     }
-
-    .center-div {
-        margin: 0 auto;
-        width: 100px; 
-    }    
 </style>
 
 <div class='frame'>
@@ -59,49 +54,56 @@
         <select id='countries'></select>
         <label class='error' id='countryRequired'>Please select a country.</label>
     </div>
-    <div class='vspacer'>
-            <label class='label'>Admin Area:</label>
-            <select id='adminAreas'></select>
-            <label class='error' id='areaRequired'>Please select an area.</label>
-        </div>
-    <div class='vspacer'>
-            <label class='label'>City:</label>
-            <input id='city'></input>
-            <label class='error' id='cityRequired'>Please enter a city.</label>
-            <label class='error' id='cityNotFound'>City not found!</label>
-            <label class='error' id='cityMoreThanOne'>More than one city found!</label>
-        </div>
+    <div class='vspacer10'>
+        <label class='label'>Admin Area:</label>
+        <select id='adminAreas'></select>
+        <label class='error' id='areaRequired'>Please select an area.</label>
     </div>
+    <div class='vspacer10'>
+        <label class='label'>City / Town:</label>
+        <input id='city'></input>
+        <label class='error' id='cityRequired'>Please enter a city.</label>
+        <label class='error' id='cityNotFound'>City not found!</label>
+        <label class='error' id='cityMoreThanOne'>More than one city found!</label>
+    </div>
+    <div id='forecastContainer'>
+    </div>
+</div>
 
-    <table id='forecastContainer'>
+<div class='hidden' id='forecastTemplate'>
+    <table class='vspacer20'>
+        <tbody>
+            <tr>
+                <td>
+                    <label id='dow{n}'></label>
+                </td>
+                <td>
+                    <img id='icon{n}'/>
+                </td>
+                <td>
+                    <label id='descr{n}'></label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label class='small-font'>High:</label>
+                    <label class='small-font' id='maxTemp{n}'></label>
+                    </br>
+                    <label class='small-font'>Low:</label>
+                    <label class='small-font' id='minTemp{n}'></label>
+                </td>
+                <td>
+                    <label class='small-font'>Wind:</label>
+                    <label class='small-font' id='windSpeed{n}'></label>
+                    <label class='small-font' id='windDir{n}'></label>
+                    </br>
+                    <label class='small-font'>Gusts:</label>
+                    <label class='small-font' id='gustSpeed{n}'></label>
+                    <label class='small-font' id='gustDir{n}'></label>
+                </td>
+            </tr>
+        </tbody>
     </table>
-    
-    <div class='hidden' id='forecastTemplate'>
-        <table>
-            <tbody>
-                <tr>
-                    <td>
-                        <label class='inline;' id='dow{n}'></label>
-                    </td>
-                    <td>
-                        <img id='icon{n}'/>
-                    </td>
-                    <td>
-                        <div>
-                            <label class='inline; small-font'>High:</label>
-                            <label class='small-font' id='maxTemp{n}'></label>
-                        </div>
-                    </td>
-                    <td>
-                        <div>
-                            <label class='inline; small-font'>Low:</label>
-                            <label class='small-font' id='minTemp{n}'></label>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
 </div>
 
 <script>
@@ -332,7 +334,10 @@
             let cities = await getCities(countryId, areaId, city);
             let key = verifyCities(cities.json);
 
-            if (key !== undefined) {
+            if (key === undefined) {
+                LocalStore.put(Constants.cookieCityKey, String.empty);
+                clearForecast();
+            } else {
                 LocalStore.put(Constants.cookieCityKey, key);
                 getWeather(key);
             }
@@ -351,11 +356,19 @@
         el(Constants.elCity).onkeyup = (event) => onKey(event.keyCode, 13, cityEntered);
     }
 
+    function clearForecast() {
+        el('forecastContainer').innerHTML = String.empty;
+    }
+
     function usePreviousSettings() {
         let countryId = LocalStore.get(Constants.cookieCountry);
         let areaId = LocalStore.get(Constants.cookieArea);
         let city = LocalStore.get(Constants.cookieCity);
         let cityKey = LocalStore.get(Constants.cookieCityKey);
+
+        if (!String.isNullOrEmpty(city)) {
+            el(Constants.elCity).value = city;
+        }
 
         if (!String.isNullOrEmpty(countryId)) {
             el(Constants.elCountries).value = countryId;
@@ -363,16 +376,12 @@
             {
                 if (!String.isNullOrEmpty(areaId)) {
                     el(Constants.elAdminAreas).value = areaId;
+
+                    if (!String.isNullOrEmpty(city)) {
+                        cityEntered();
+                    }
                 }
             });
-        }
-
-        if (!String.isNullOrEmpty(city)) {
-            el(Constants.elCity).value = city;
-        }
-
-        if (!String.isNullOrEmpty(cityKey)) {
-            getWeather(cityKey);
         }
     }
 
@@ -381,7 +390,7 @@
         url = addParam(url, Constants.details, String.true);
         let forecast = await get(url);
         let dailyForecasts = forecast.json.DailyForecasts;
-        el('forecastContainer').innerHTML = String.empty;
+        clearForecast();
 
         dailyForecasts.forEach((forecast, idx) => {
             let date = forecast.Date;
@@ -400,13 +409,19 @@
             let formattedIcon = parseInt(icon).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
             let iconUrl = `${Constants.iconUrl}${formattedIcon}-s.png`;           // Ex: 01-s.png
 
-            let elForecastHtml = el('forecastTemplate').innerHTML;
-            elForecastHtml = String.replaceAll(elForecastHtml, '{n}', idx);
+            let elForecastTemplate = el('forecastTemplate');
+            let elForecastContainer = el('forecastContainer');
+            elForecastHtml = String.replaceAll(elForecastTemplate.innerHTML, '{n}', idx);
             el('forecastContainer').innerHTML += elForecastHtml;
             el(`dow${idx}`).innerHTML = dayOfWeek;
+            el(`descr${idx}`).innerHTML = descr;
             el(`icon${idx}`).src = iconUrl;
-            // el(`minTemp${idx}`).innerHTML = minTemp;
-            // el(`maxTemp${idx}`).innerHTML = maxTemp;
+            el(`minTemp${idx}`).innerHTML = minTemp;
+            el(`maxTemp${idx}`).innerHTML = maxTemp;
+            el(`windSpeed${idx}`).innerHTML = windSpeed;
+            el(`windDir${idx}`).innerHTML = windDirection;
+            el(`gustSpeed${idx}`).innerHTML = windGust;
+            el(`gustDir${idx}`).innerHTML = windGustDirection;
         });
     }
 
