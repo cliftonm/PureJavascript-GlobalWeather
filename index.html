@@ -6,13 +6,12 @@
     https://www.codeproject.com/Articles/1274513/Angular-7-with-NET-Core-2-2-Global-Weather-Part-1
     https://www.codeproject.com/Articles/1276248/Angular-7-with-NET-Core-2-2-Global-Weather-Part-2
 
-    What I like to see in my Javascript code:
-
-    // I don't want to see any harcoded strings in the Javascript except for Constants here!
-    // The only exception is single character strings used for url path and parameter manipulation.
-    // Callback methods are archaic -- async/await is really nice here.
-    // Use template literals (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) instead of str1 + 'xyz' + str2
-
+-->
+<!--
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 -->
 
 <style>
@@ -22,7 +21,7 @@
     }
 
     .label {
-        width: 100px;
+        width: 120px;
         display: inline-block;
     }
     
@@ -72,18 +71,28 @@
                 <select id='countries'></select>
                 <label class='error' id='countryRequired'>Please select a country.</label>
             </div>
+
             <div class='vspacer10'>
                 <label class='label'>Admin Area:</label>
                 <select id='adminAreas'></select>
                 <label class='error' id='areaRequired'>Please select an area.</label>
             </div>
-            <div class='vspacer10'>
+
+            <div class='vspacer10'></div>
+
+            <div>
                 <label class='label'>City / Town:</label>
                 <input id='city'></input>
                 <label class='error' id='cityRequired'>Please enter a city.</label>
                 <label class='error' id='cityNotFound'>City not found!</label>
                 <label class='error' id='cityMoreThanOne'>More than one city found!</label>
             </div>
+
+            <div class='hidden vspacer10' id='selectCity'>
+                <label class='label'>Please select one:</label>
+                <select id='cities'></select>
+            </div>
+
             <div id='forecastContainer'>
             </div>
         </div>
@@ -118,6 +127,16 @@
                             <label class='small-font'>Gusts:</label>
                             <label class='small-font' id='gustSpeed{n}'></label>
                             <label class='small-font' id='gustDir{n}'></label>
+                        </td>
+                        <td>
+                            <label class='small-font'>Rain:</label>
+                            <label class='small-font' id='rain{n}'></label>
+                            </br>
+                            <label class='small-font'>Snow:</label>
+                            <label class='small-font' id='snow{n}'></label>
+                            </br>
+                            <label class='small-font'>Ice:</label>
+                            <label class='small-font' id='ice{n}'></label>
                         </td>
                     </tr>
                 </tbody>
@@ -202,6 +221,7 @@
 
         static get selectCountry() { return '--- Select Country ---'; }
         static get selectArea() { return '--- Select Area ---'; }
+        static get selectCity() { return '--- Select City ---'; }
 
         static get visible() { return 'visible'; }
         static get hidden() { return 'hidden'; }
@@ -209,11 +229,34 @@
         static get elCountries() {return 'countries'; }
         static get elAdminAreas() { return 'adminAreas'; }
         static get elCity() { return 'city'; }
+        static get elForecastTemplate() { return 'forecastTemplate'; }
+        static get elForecastContainer() { return 'forecastContainer'; }
+
+        static get elSelectCity() {return 'selectCity'; }
+        static get elCities() { return 'cities'; }
 
         static get restGET() { return 'GET'; }
+        static get enUS() {return 'en-US'; }
+
+        static get dow() { return 'dow'; }
+        static get descr() { return 'descr'; }
+        static get icon() { return 'icon'; }
+        static get minTemp() { return 'minTemp'; }
+        static get maxTemp() { return 'maxTemp'; }
+        static get windSpeed() { return 'windSpeed'; }
+        static get windDir() { return 'windDir'; }
+        static get gustSpeed() { return 'gustSpeed'; }
+        static get gustDir() { return 'gustDir'; }
+        static get rain() { return 'rain'; }
+        static get snow() { return 'snow'; }
+        static get ice() { return 'ice'; }
+
+        static get indexer() { return '{n}'; }
     }
 
-    function el(id) { return document.getElementById(id); }    
+    function el(id) { 
+        return document.getElementById(id); 
+    }    
 
     function standardErrorHandler(err) {
         alert(err.statusText);
@@ -257,9 +300,9 @@
     }
 
     function addParam(url, paramName, paramValue) {
-        url = `${url}&${paramName}=${paramValue}`;
+        let newUrl = `${url}&${paramName}=${paramValue}`;
 
-        return url;
+        return newUrl;
     }
 
     function verifyCities(json) {
@@ -269,12 +312,34 @@
             showError(Constants.cityNotFound);
         } else if (json.length > 1) {
             showError(Constants.cityMoreThanOne);
-        }
-        else {
+            showCitySelector(json);
+        } else {
             key = json[0].Key;
         }
 
         return key;
+    }
+
+    function showCitySelector(json) {
+        el(Constants.elSelectCity).style.visibility = Constants.visible;
+        clearDropdown(el(Constants.elCities));
+
+        // Get some info the user can use to select the desired city, sorted so that cities that don't have parents are shown first.
+        let areas = json.map(item => {
+            let pc = item.ParentCity;
+            let parentCity = String.empty;
+            
+            if (pc) {
+              parentCity = `Parent City: ${item.ParentCity.LocalizedName}`;
+            }
+
+            let info = `${item.Country.LocalizedName} ${item.AdministrativeArea.LocalizedName} ${item.LocalizedName} ${item.PrimaryPostalCode} ${parentCity}`;
+            return {name: info, id: item.Key, parent: parentCity};
+            }).sort((a, b) => {return a.parent < b.parent ? -1 : 1});
+
+        let elOptions = el(Constants.elCities).options;            
+        elOptions[0] = new Option(Constants.selectCity, String.empty);
+        areas.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
     }
 
     function getCities(countryId, areaId, city) {
@@ -325,6 +390,13 @@
         LocalStore.put(Constants.cookieArea, id);
     }
 
+    function onCitySelected() {
+        showError(Constants.cityMoreThanOne, false);
+        let key = el(Constants.elCities).value;
+        LocalStore.put(Constants.cityKey, key);
+        getWeather(key);
+    }
+
     async function cityEntered() {
         let countryId = el(Constants.elCountries).value;
         let areaId = el(Constants.elAdminAreas).value;
@@ -365,6 +437,7 @@
     function wireUpEvents() {
         el(Constants.elCountries).onchange = onCountrySelected;
         el(Constants.elAdminAreas).onchange = onAdminAreaSelected;
+        el(Constants.elCities).onchange = onCitySelected;
         el(Constants.elCity).onkeyup = (event) => onKey(event.keyCode, 13, cityEntered);
     }
 
@@ -403,38 +476,42 @@
         let forecast = await get(url);
         let dailyForecasts = forecast.json.DailyForecasts;
         clearForecast();
+        dailyForecasts.forEach((forecast, idx) => { showForecast(forecast, idx); });
+    }
 
-        dailyForecasts.forEach((forecast, idx) => {
-            let date = forecast.Date;
-            let dayOfWeek = new Date(date).toLocaleString('en-us', {  weekday: 'long' });
-            let minTemp = forecast.Temperature.Minimum.Value + ' ' + forecast.Temperature.Minimum.Unit;
-            let maxTemp = forecast.Temperature.Maximum.Value + ' ' + forecast.Temperature.Maximum.Unit;
-            let icon = forecast.Day.Icon;
-            let descr = forecast.Day.LongPhrase;
-            let windSpeed = forecast.Day.Wind.Speed.Value + ' ' + forecast.Day.Wind.Speed.Unit;
-            let windDirection = forecast.Day.Wind.Direction.Localized;
-            let windGust = forecast.Day.WindGust.Speed.Value + ' ' + forecast.Day.WindGust.Speed.Unit;
-            let windGustDirection = forecast.Day.WindGust.Direction.Localized;
-            let rain = forecast.Day.Rain.Value + ' ' + forecast.Day.Rain.Unit;
-            let snow = forecast.Day.Snow.Value + ' ' + forecast.Day.Snow.Unit;
-            let ice = forecast.Day.Ice.Value + ' ' + forecast.Day.Ice.Unit;
-            let formattedIcon = parseInt(icon).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
-            let iconUrl = `${Constants.iconUrl}${formattedIcon}-s.png`;           // Ex: 01-s.png
+    function showForecast(forecast, idx) {
+        let date = forecast.Date;
+        let dayOfWeek = new Date(date).toLocaleString('en-us', {  weekday: 'long' });
+        let minTemp = forecast.Temperature.Minimum.Value + ' ' + forecast.Temperature.Minimum.Unit;
+        let maxTemp = forecast.Temperature.Maximum.Value + ' ' + forecast.Temperature.Maximum.Unit;
+        let icon = forecast.Day.Icon;
+        let descr = forecast.Day.LongPhrase;
+        let windSpeed = forecast.Day.Wind.Speed.Value + ' ' + forecast.Day.Wind.Speed.Unit;
+        let windDirection = forecast.Day.Wind.Direction.Localized;
+        let windGust = forecast.Day.WindGust.Speed.Value + ' ' + forecast.Day.WindGust.Speed.Unit;
+        let windGustDirection = forecast.Day.WindGust.Direction.Localized;
+        let rain = forecast.Day.Rain.Value + ' ' + forecast.Day.Rain.Unit;
+        let snow = forecast.Day.Snow.Value + ' ' + forecast.Day.Snow.Unit;
+        let ice = forecast.Day.Ice.Value + ' ' + forecast.Day.Ice.Unit;
+        let formattedIcon = parseInt(icon).toLocaleString(Constants.enUS, {minimumIntegerDigits: 2, useGrouping:false});
+        let iconUrl = `${Constants.iconUrl}${formattedIcon}-s.png`;           // Ex: 01-s.png
+        let elForecastTemplate = el(Constants.elForecastTemplate);
+        let elForecastContainer = el(Constants.elForecastContainer);
+        elForecastHtml = String.replaceAll(elForecastTemplate.innerHTML, Constants.indexer, idx);
+        elForecastContainer.innerHTML += elForecastHtml;
 
-            let elForecastTemplate = el('forecastTemplate');
-            let elForecastContainer = el('forecastContainer');
-            elForecastHtml = String.replaceAll(elForecastTemplate.innerHTML, '{n}', idx);
-            el('forecastContainer').innerHTML += elForecastHtml;
-            el(`dow${idx}`).innerHTML = dayOfWeek;
-            el(`descr${idx}`).innerHTML = descr;
-            el(`icon${idx}`).src = iconUrl;
-            el(`minTemp${idx}`).innerHTML = minTemp;
-            el(`maxTemp${idx}`).innerHTML = maxTemp;
-            el(`windSpeed${idx}`).innerHTML = windSpeed;
-            el(`windDir${idx}`).innerHTML = windDirection;
-            el(`gustSpeed${idx}`).innerHTML = windGust;
-            el(`gustDir${idx}`).innerHTML = windGustDirection;
-        });
+        el(`${Constants.dow}${idx}`).innerHTML = dayOfWeek;
+        el(`${Constants.descr}${idx}`).innerHTML = descr;
+        el(`${Constants.icon}${idx}`).src = iconUrl;
+        el(`${Constants.minTemp}${idx}`).innerHTML = minTemp;
+        el(`${Constants.maxTemp}${idx}`).innerHTML = maxTemp;
+        el(`${Constants.windSpeed}${idx}`).innerHTML = windSpeed;
+        el(`${Constants.windDir}${idx}`).innerHTML = windDirection;
+        el(`${Constants.gustSpeed}${idx}`).innerHTML = windGust;
+        el(`${Constants.gustDir}${idx}`).innerHTML = windGustDirection;
+        el(`${Constants.rain}${idx}`).innerHTML = rain;
+        el(`${Constants.snow}${idx}`).innerHTML = snow;
+        el(`${Constants.ice}${idx}`).innerHTML = ice;
     }
 
     function initializeElements() {
@@ -448,5 +525,4 @@
         getCountries().then(usePreviousSettings);
     })();
     
-
 </script>

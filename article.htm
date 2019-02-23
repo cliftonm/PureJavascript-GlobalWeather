@@ -1,0 +1,755 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Web Frameworks - A Solution Look</title>
+</head>
+
+<body>
+
+<p>Web Frameworks - A Solution Looking for a Problem?</p>
+<h2>Introduction</h2>
+<p>I quite enjoyed Fred Song's articles here on Code Project:</p>
+<p>
+<a href="https://www.codeproject.com/Articles/1274513/Angular-7-with-NET-Core-2-2-Global-Weather-Part-1">
+Angular 7 with .NET Core 2.2 - Global Weather (Part 1)</a><br>
+<a href="https://www.codeproject.com/Articles/1276248/Angular-7-with-NET-Core-2-2-Global-Weather-Part-2">
+Angular 7 with .NET Core 2.2 - Global Weather (Part 2)</a></p>
+<p>and they are well worth the read for the step-by-step instructions on how to 
+use Angular 7 with .NET Core.&nbsp; It probably wasn't the author's intention 
+though to inspire an article asking the question, do we really need these 
+frameworks?&nbsp; Having used Angular a bit myself now, as well as
+<a href="https://www.sencha.com/products/extjs/">Sencha Ext JS</a> and a 
+smattering of other frameworks--but not yet <a href="https://vuejs.org/">Vue</a>!&nbsp; 
+If you watch the Vue introductory video, they bring up several points about why 
+we have these web frameworks:</p>
+<ol>
+	<li>Web pages have become more dynamic and powerful thanks to Javascript.</li>
+	<li>We've moved a lot of server-side code into the browser.</li>
+	<li>That has left us with thousands of lines of Javascript code connecting 
+	to CSS and HTML with no formal organization.</li>
+</ol>
+<p>And this is why we have Javascript frameworks:</p>
+<ol>
+	<li>Better organization.</li>
+	<li>Better maintainability.</li>
+	<li>Easier to test.</li>
+	<li>Reuse of components -- Javascript, HTML, CSS.</li>
+</ol>
+<p>And the selling points of all of these frameworks is that they are &quot;reactive&quot; 
+-- when the data changes, all the places on the page where the data is used is 
+automatically updated.</p>
+<h3>Reality</h3>
+<p>It takes discipline, not frameworks, to achieve the above 4 goals, and in my 
+experience, that discipline is almost always lacking.&nbsp; Instead, I see:</p>
+<ol>
+	<li>Organization foisted on the developer by what the framework thinks is 
+	the best way to organize the web page files.&nbsp; This is a really only a 
+	minor quibble, I don't have a problem with a framework by default organizing 
+	the files into the typical MVC - model, view, controller -- (or similar) 
+	architecture.&nbsp; What I do argue with is that an MVC architecture and its 
+	ilk are often unnecessarily burdensome.</li>
+	<li>Maintainability is quite dubious:<ol>
+		<li>A web app becomes locked in to a particular version and its bugs, 
+		and upgrading a large application is prohibitively costly.&nbsp; The 
+		result is that the developers end up maintaining an application that 
+		uses a framework that becomes years outdated, documentation becomes 
+		harder to find, and improvements in Javascript can't be used because the 
+		&quot;compiler&quot; of the obsolete framework doesn't handle things like HTML5 
+		syntax or Javascript fat arrow <code>=&gt;</code> functions.&nbsp; </li>
+		<li>New third party components that you might want to take advantage 
+		probably require the latest (or near latest) version of whatever 
+		framework is being used by the web app.&nbsp; Your only recourse is to 
+		use the component without the support of the framework and wire things 
+		up &quot;the old way.&quot;</li>
+	</ol>
+	</li>
+	<li>Testing -- let's be real here.&nbsp;
+<ol>
+	<li>Testing is done by exercising the web page to make sure it's doing the 
+	right thing.&nbsp; </li>
+	<li>Automating those tests is and will continue to be painful, particularly 
+	when dealing with asynchronous server-side calls that have unpredictable 
+	response times and data sets.&nbsp; </li>
+	<li>And the real nail in the coffin to automated testing (particularly tools 
+	that use element ID's to get/set values) is that these frameworks can mangle 
+	the HTML, creating internal ID values and HTML structures that make it all 
+	but impossible to find the element to which the test script needs access.</li>
+</ol>
+	</li>
+	<li>Reuse -- I've only ever seen limited reuse.&nbsp; Headers and footers 
+	are the most common, sometimes there are elements in certain pages that are 
+	reused in other pages.</li>
+</ol>
+<h4>An example of test automation issues in ExtJS</h4>
+<p>This is the mangled ID that ExtJS created for the input box in a &quot;dialog&quot; 
+form:</p>
+<pre>&lt;input id=&quot;combo-2365-inputEl&quot;</pre>
+<p>Close the dialog and re-open it, and I see:</p>
+<pre>&lt;input id=&quot;combo-2365-inputEl&quot;</pre>
+<p>Notice the number changed!&nbsp; How can I write an automated test script 
+when the element's ID is 1) arbitrary and 2) has no relationship to the &quot;id&quot; 
+that I gave it in the definition of the form?</p>
+<h3>The Cut and Paste is the Number One Killer Maintainability</h3>
+<p>I see this all the time:</p>
+<ol>
+	<li>I have some HTML where 90% of it can be reused but I have to make small 
+	tweaks for the specific page.&nbsp; Solution?&nbsp; Cut &amp; paste, add a new 
+	view, and make the 10% changes.</li>
+	<li>I have a Javascript function where 90% of it can be reused.&nbsp; 
+	Solution?&nbsp; Cut &amp; paste, make the changes, add the function with a 
+	different name in the same controller or create a new controller.</li>
+</ol>
+<p>Instead of refactoring the HTML to be more dynamic (that was one of the 
+points of these frameworks, right?) or refactor the calls to the function to be 
+more general purpose, it's easier, faster, and gets the change delivered quicker 
+simply by copy &amp; pasting.&nbsp; There's no discipline in that.&nbsp; Do that 
+enough times, and your single page app, which loads <i>everything</i> up front, 
+becomes slower and slower, even with minimization and content compressing.</p>
+<h3>Will the Real Model Please Stand Up?</h3>
+<p>In my opinion, the overhead of sheer typing is outrageous.&nbsp; We:</p>
+<ol>
+	<li>Start with the database schema</li>
+	<li>We recreate an entity model in the back-end</li>
+	<li>We recreate the model in the front-end.</li>
+	<li>We create a view that maps fields to the model in the front-end.</li>
+</ol>
+<p>While all of these steps can be avoided by a tool that generates each and 
+every one of those classes, files, JSON objects, and templates:</p>
+<ol>
+	<li>It usually creates unnecessary script that needs to be sent down to the 
+	browser, slowing down the website.</li>
+	<li>It often creates unnecessary serialization and deserialization as the 
+	data is sent down to the browser, again slowing down the website.</li>
+	<li>At some point (usually rather quickly), the tool becomes useless (unless 
+	it is very very good) because one or more of the models is customized with 
+	computations and/or formatters.&nbsp; So now when the real model (the DB 
+	schema) changes, you are required to manual update all the intermediary 
+	models. </li>
+</ol>
+<h3>My Solution</h3>
+<p>To reiterate, good organization, maintainability, ability to automate 
+testing, and reuse are not features that I've ever seen a framework actually 
+help me with.&nbsp; If I don't have the discipline to write Javascript with the 
+above 4 goals in mind, the framework will not help and in reality often hinders 
+testing.&nbsp; Personally, when I develop websites, my solution is to:</p>
+<ol>
+	<li>Not use any framework 
+at all.</li>
+	<li>Use third party components sparingly as third party components impact 
+	maintainability and ease of testing as well.</li>
+	<li>Avoid unnecessary models particularly when all I need is to serialize 
+	some records into JSON, deliver that to the browser and render it in the 
+	view.</li>
+	<li>Going the other direction holds as well -- either the entire record is 
+	sent up as JSON, deserialized into parameter-value pairs and inserted into 
+	the table, or specific fields are updated either as they change or when the 
+	user clicks on &quot;Update.&quot;&nbsp; Different endpoints for different purposes.</li>
+</ol>
+<h4>Style Guidelines</h4>
+<p>I also try to adhere to my own style guidelines.&nbsp; These are my own 
+guidelines and I'm just telling you what they are, not trying to foist them on 
+you.</p>
+<ul>
+	<li>I don't want to see any &quot;red&quot; in my Javascript.&nbsp; The color red is 
+	typically used by editors to indicate string constants.</li>
+</ul>
+<p>Wrong:</p>
+<pre><img border="0" src="ex1.png" width="322" height="24"></pre>
+<p>Right:</p>
+<p><img border="0" src="ex2.png" width="378" height="22"></p>
+<p>Or similar, the idea is to use a class with static getters for constants.&nbsp; 
+There are exceptions to this rule, of course, but they are conscious exceptions.</p>
+<ul>
+	<li>Callbacks are archaic -- use async/await</li>
+</ul>
+<p>The typical approach is to use a callback for a completion, either an 
+asynchronous operation or a function's &quot;I've done what I was supposed to do, now 
+what?&quot;</p>
+<p>Wrong:</p>
+<pre>function someFunction() {
+  getMyData(url, processMyData);
+}
+
+function processMyData(data) {
+  // do something
+}</pre>
+<p>Right:</p>
+<pre>async function getMyData() {
+  // do something, usually with a Promise
+}
+
+function someFunction() {
+  let data = await getMyData();
+  processMyData(data);  
+}</pre>
+<p>or:</p>
+<pre>function someFunction() {
+  getMyData().then((data) =&gt; processMyData(data));
+}</pre>
+<ul>
+	<li>Use fat arrows instead of <code>function</code></li>
+</ul>
+<p>Wrong:</p>
+<pre>function someFunction() {
+  getMyData().then(function (data) { processMyData(data);} );
+}</pre>
+<p>Right:</p>
+<pre>function someFunction() {
+  getMyData().then((data) =&gt; processMyData(data));
+}</pre>
+<ul>
+	<li>Use template literals</li>
+</ul>
+<p>This is a really minor one and even in my mind, questionable still, haha.</p>
+<p>Wrong:</p>
+<pre>return url + Constants.apiKeyName + '=' + Constants.apiKey;</pre>
+<p>Right:</p>
+<pre>return `${url}?${Constants.apiKeyName}=${Constants.apiKey}`;</pre>
+<ul>
+	<li>Don't Repeat Yourself (DRY)</li>
+</ul>
+<p>Don't really need to repeat why this is important, right?</p>
+<ul>
+	<li>High level functions should minimize flow control statements and look 
+	like a linear workflow as much as possible.</li>
+</ul>
+<p>If there's flow control statements (like if-else and loops) then refactor the 
+function into separate smaller functions.</p>
+<ul>
+	<li>Functions should be small!</li>
+</ul>
+<p>Shouldn't need to explain that one.&nbsp; Even if it's a one line function:</p>
+<p>Wrong:</p>
+<pre>let newStr = str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, &quot;\\$1&quot;);</pre>
+<p>Seriously?&nbsp; WTF does this do?</p>
+<p>Right:</p>
+<pre>static escapeRegExp(str) {
+  return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, &quot;\\$1&quot;);
+} </pre>
+<p>Oh, this escapes characters that would normally be interpreted in a regex.</p>
+<ul>
+	<li>Use <code>map</code>, <code>reduce</code>, and <code>filter</code> (MRF) instead of for loops</li>
+</ul>
+<p>Personally, I think for loops are archaic, particularly since MRF avoids 
+writing lots of &quot;if&quot; statements, creating temporary holding arrays and pushing 
+matching items into those arrays.</p>
+<ul>
+	<li>Use temporary variables</li>
+</ul>
+<p>Nothing makes debugging more annoying than inlining computations.</p>
+<p>Wrong:</p>
+<pre>function addParam(url, paramName, paramValue) {
+  return `${url}&amp;${paramName}=${paramValue}`;
+}
+</pre>
+<p>Right:</p>
+<pre>function addParam(url, paramName, paramValue) {
+  newUrl = `${url}&amp;${paramName}=${paramValue}`;
+
+  return newUrl;
+}</pre>
+<p>And that was a simple example.</p>
+<p>There are more, but that's the basic short and simple set of style guidelines 
+to which I like to adhere.</p>
+<h2>Let the De-Structuring Begin!</h2>
+<p>So let's start with 
+<a href="https://www.codeproject.com/Articles/1274513/Angular-7-with-NET-Core-2-2-Global-Weather-Part-1">Part I of the Global Weather article</a>.</p>
+<h3>What We Don't Need</h3>
+<p>Here's what we don't need to do:</p>
+<ol>
+	<li>Install Node JS so we get npm</li>
+<li>Install Angular</li>
+	<li>Create an ASP.NET Core Web Project in Visual Studio 2017</li>
+<li>Create the weather client with Angular CLI</li>
+	<li>Tweak the <i>startup.cs</i> class</li>
+	<li>Change the <code>Configure</code> method</li>
+	<li>Touch <i>launchSettings.json</i></li>
+	<li>Work around the Angular / .ASP.NET Core issue by creating a 
+	<code>CurrentDirectoryHelpers</code> class</li>
+	<li>Tweak <i>startup.cs</i> again</li>
+	<li>Create a weather component</li>
+	<li>Add an <code>import</code> statement in the router for the component 
+	created in the previous step</li>
+	<li>Register <code>ReactiveFormsModule</code> in the <i>app.modules.ts</i> file.</li>
+	<li>Build reactive form in <code>ngOnInit()</code> of <i>weather.component.ts</i></li>
+</ol>
+<p>Having eliminated all the above steps, I'm more than 1/3 of the way through 
+the article where we finally get to creating the HTML for the form.&nbsp; </p>
+<h3>The User Interface</h3>
+<p>I actually don't really like forms.&nbsp; So my HTML looks like this:</p>
+<pre>&lt;div class='frame'&gt;
+  &lt;div&gt;
+    &lt;label class='label'&gt;Country:&lt;/label&gt;
+    &lt;select id='countries'&gt;&lt;/select&gt;
+    &lt;label class='error' id='countryRequired'&gt;Please select a country.&lt;/label&gt;
+  &lt;/div&gt;
+  &lt;div class='vspacer10'&gt;&lt;/div&gt;
+  &lt;div&gt;
+    &lt;label class='label'&gt;Admin Area:&lt;/label&gt;
+    &lt;select id='adminAreas'&gt;&lt;/select&gt;
+    &lt;label class='error' id='areaRequired'&gt;Please select an area.&lt;/label&gt;
+  &lt;/div&gt;
+  &lt;div class='vspacer10'&gt;
+    &lt;label class='label'&gt;City / Town:&lt;/label&gt;
+    &lt;input id='city'&gt;&lt;/input&gt;
+    &lt;label class='error' id='cityRequired'&gt;Please enter a city.&lt;/label&gt;
+    &lt;label class='error' id='cityNotFound'&gt;City not found!&lt;/label&gt;
+    &lt;label class='error' id='cityMoreThanOne'&gt;More than one city found!&lt;/label&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
+<p><img border="0" src="w1.png" width="408" height="95"></p>
+		<p>This looks a bit different from Fred Song's (let me reiterate, 
+		excellent) article, for reasons we'll see later.</p>
+<h3>What We Don't Need</h3>
+<ul>
+	<li>Bootstrap.&nbsp; Especially installing it with npm.&nbsp; </li>
+</ul>
+<p>OK, you really want it?&nbsp; Get it from the CDN, the compiled version which 
+apparently needs jQuery and Popper as well.&nbsp; WTF?</p>
+<pre>&lt;script src=&quot;https://code.jquery.com/jquery-3.3.1.slim.min.js&quot;...&gt;&lt;/script&gt;
+&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js&quot;...&gt;&lt;/script&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css&quot; ...&gt;
+&lt;script src=&quot;https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js&quot; ...&gt;&lt;/script&gt;</pre>
+<p>Actually jQuery and Popper are not needed for this simple styling.</p>
+<p><img border="0" src="w2.png" width="452" height="139"></p>
+<p>Anyways, don't want it, don't need it.&nbsp; It just makes me want to zoom 
+out the browser window because suddenly everything is so BIG.</p>
+<p>More things we don't need:</p>
+<ul>
+	<li>Angular service</li>
+	<li>Angular HttpClient</li>
+</ul>
+<h3>Getting Countries</h3>
+<p>We're now half way through Song's article and we're ready to get a list of 
+countries.</p>
+<p>First, let's set up a poor man's &quot;let's get things rolling&quot; function.&nbsp; I 
+realize this isn't necessarily fully browser compatible (reading about what 
+jQuery does is entertaining on how messed up browsers and their versions are) 
+but this works for me:</p>
+<pre>&lt;script&gt;
+  (function initialize() {
+    initializeElements();
+    getCountries();
+  })();
+&lt;/script&gt;</pre>
+<p>Now we need some behaviors and helper functions:</p>
+<pre>function el(id) { 
+  return document.getElementById(id); 
+} 
+
+function initializeElements() {
+  let elOptions = el(Constants.elAdminAreas).options;
+  elOptions[0] = new Option(Constants.selectArea, String.empty);
+}
+
+async function getCountries() {
+  let url = appendAppKey(Constants.countriesUrl);
+  let countryList = await get(url);
+  showCountries(countryList.json);
+}
+</pre>
+<pre>function appendAppKey(url) {
+  return `${url}?${Constants.apiKeyName}=${Constants.apiKey}`;
+}</pre><pre>function get(api) {
+  return new Promise(resolve =&gt; {
+    let xhr = new XMLHttpRequest();
+
+    xhr.onload = () =&gt; {
+      resolve({json: JSON.parse(xhr.response), status: xhr.status});
+    };
+
+    xhr.onerror = () =&gt; { 
+      resolve({json: JSON.parse(String.emptyJSON), status: xhr.status, statusText: xhr.statusText});
+
+      if (xhr.statusText != String.empty) {
+        standardErrorHandler({status: xhr.status, statusText: xhr.statusText});
+      }
+    };
+
+    xhr.open(Constants.restGET, api, true);
+    xhr.send();
+  });
+}
+
+function clearDropdown(el) {
+  el.innerHTML = String.empty;
+}
+
+function showCountries(json) {
+  clearDropdown(el(Constants.elCountries));
+  let countries = json.map(item =&gt; {return {name: item.EnglishName, id: item.ID};})
+    .sort((a, b) =&gt; {return a.name &lt; b.name ? -1 : 1});
+  let elOptions = el(Constants.elCountries).options;
+  elOptions[0] = new Option(Constants.selectCountry, String.empty);
+  countries.map(item =&gt; { elOptions[elOptions.length] = new Option(item.name, item.id);});
+}
+</pre>
+<p>The <code>get</code> function is really the heart of the whole process.&nbsp; Because the 
+AccuWeather service always returns JSON, we can serialize the string response 
+into a JSON object.&nbsp; The response JSON and status are embedded in their own 
+object for consistency between the &quot;ok&quot; and &quot;error&quot; returns.</p>
+<p>We now have a country list:</p>
+<p><img border="0" src="w3.png" width="289" height="348"></p>
+<p>The default behavior of the dropdown already implements auto-complete: you 
+can start typing and the selection list will start navigating to the first 
+match.&nbsp; There's an implementation at
+<a href="https://www.w3schools.com/howto/howto_js_autocomplete.asp">
+W3Schools.com here</a> which uses a textbox to show you what you're typing along 
+with a separate dropdown list.&nbsp; I decided I'm not actually keen on 
+implementing it because as mentioned, the dropdown already implements 
+auto-complete.</p>
+<h3>Getting Admin Areas</h3>
+<p>One of the things I discovered with the AccuWeather API is that it has the 
+concept of an &quot;admin area.&quot;&nbsp; For the United States, the admin areas are the 
+states.&nbsp; For Australia, the admin areas are the territories and states.&nbsp; 
+For Canada they are provinces.&nbsp; And so forth.&nbsp; A city name is not 
+necessarily unique in a country or even an admin area -- for example, the town 
+&quot;Red Hook&quot; in New York occurs twice.&nbsp; So I was somewhat surprised that 
+Song's article didn't cover handling multiple cities found within a country and 
+admin area.&nbsp; But what it does do is let you query cities even without 
+selecting a country or admin area.&nbsp; We'll look at these options later.&nbsp; 
+Regardless, I wanted to expose the admin area selection, which is why my UI is a 
+bit different.</p>
+<p>Once a country is selected, we can get the admin areas.&nbsp; We'll add this 
+function now:</p>
+<pre>function wireUpEvents() {
+  el(Constants.elCountries).onchange = onCountrySelected;
+  el(Constants.elAdminAreas).onchange = onAdminAreaSelected;
+  el(Constants.elCity).onkeyup = (event) =&gt; onKey(event.keyCode, 13, cityEntered);
+}</pre>
+<p>I don't like &quot;Go&quot; buttons, it's extra mouse movement or tab-select with 
+spacebar.&nbsp; The ENTER key will do just fine to actually handle the city.&nbsp; 
+More implementation:</p>
+<pre>async function onCountrySelected() {
+  showError(Constants.countryRequired, false);
+  let id = el(Constants.elCountries).value; 
+  await getAdminAreas(id);
+}
+
+async function getAdminAreas(locId) {
+  let url = appendAppKey(`${Constants.adminAreasUrl}/${locId}`);
+  let areaList = await get(url);
+  showAdminAreas(areaList.json);
+}
+
+function onAdminAreaSelected() {
+  showError(Constants.areaRequired, false);
+  let id = el(Constants.elAdminAreas).value;
+}
+
+function showAdminAreas(json) {
+  clearDropdown(el(Constants.elAdminAreas));
+  let areas = json.map(item =&gt; {return {name: item.EnglishName, id: item.ID};})
+    .sort((a, b) =&gt; {return a.name &lt; b.name ? -1 : 1});
+  let elOptions = el(Constants.elAdminAreas).options; 
+  elOptions[0] = new Option(Constants.selectArea, String.empty);
+  areas.map(item =&gt; { elOptions[elOptions.length] = new Option(item.name, item.id);});
+}</pre>
+<p>Now, after selecting the country, we get the admin areas:</p>
+<p><img border="0" src="w4.png" width="182" height="343"></p>
+<h3>Verify the City</h3>
+<p>The initial behavior that I implemented simply displays and error message if 
+more than one city in the country and admin area is found:</p>
+<p><img border="0" src="w5.png" width="693" height="93"></p>
+<p>The implementation is straight forward but in my opinion violates my &quot;keep 
+the functions small&quot; style guideline:</p>
+<pre>async function cityEntered() {
+  let countryId = el(Constants.elCountries).value;
+  let areaId = el(Constants.elAdminAreas).value;
+  let city = el(Constants.elCity).value;
+  let ok = true;
+
+  // clear errors related to city being entered but not found or more than one found.
+  showError(Constants.cityNotFound, false);
+  showError(Constants.cityMoreThanOne, false);
+
+  // Verify selections:
+  ok &amp;= showError(Constants.countryRequired, countryId == String.empty);
+  ok &amp;= showError(Constants.areaRequired, areaId == String.empty);
+  ok &amp;= showError(Constants.cityRequired, city == String.empty);
+
+  if (ok) {
+    showError(Constants.cityRequired, false);
+    let cities = await getCities(countryId, areaId, city);
+    let key = verifyCities(cities.json);
+
+    if (key === undefined) {
+      clearForecast();
+    } else {
+      getWeather(key);
+    }
+  }
+}
+
+function verifyCities(json) {
+  let key = undefined;
+
+  if (json.length == 0) {
+    showError(Constants.cityNotFound);
+  } else if (json.length &gt; 1) {
+    showError(Constants.cityMoreThanOne);
+  } else {
+    key = json[0].Key;
+  }
+
+  return key;
+}
+
+function getCities(countryId, areaId, city) {
+  let url = appendAppKey(Constants.citySearchUrl);
+  url = addParam(url, Constants.queryKey, city);
+  url = url.replace(Constants.countryId, countryId).replace(Constants.areaId, areaId);
+  return get(url);
+}
+
+function addParam(url, paramName, paramValue) {
+  let url = `${url}&amp;${paramName}=${paramValue}`;
+
+  return url;
+}
+
+function onKey(keyCode, matchValue, callback) {
+  if (keyCode == matchValue) {
+    callback();
+  }
+}</pre>
+<p>Notice I use a callback for <code>onKey</code> -- here a callback is appropriate.&nbsp; 
+It's not an async event, it's a <i>condition</i> that if met results in the 
+callback.</p>
+		<h3>What We Don't Need</h3>
+<p>Models!&nbsp; We don't need models of the returned countries, admin areas, or 
+weather data because guess what, the JSON <i>is</i> the model!&nbsp; Why are we 
+mapping the resulting JSON to the model when it's already in JSON?&nbsp; That's 
+called CWDN - Computation We Don't Need.&nbsp; So let's skip down to about 3/4 
+of the way to the bottom of Song's article and drop the weather data into a 
+container using a template to describe how it looks.</p>
+<h3>Get and Display Weather</h3>
+<p>First, let's create a container for the weather data:</p>
+<pre>&lt;div id='forecastContainer'&gt;
+&lt;/div&gt;</pre>
+<p>Next, let's define a template for how the weather data will be formatted.&nbsp; 
+Since we're getting back the forecast for more than one day, each day will be 
+rendered as a table:</p>
+<pre>&lt;div class='hidden' id='forecastTemplate'&gt;
+  &lt;table class='vspacer20 fixed-layout'&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td class='colDayOfWeek'&gt;
+          &lt;label id='dow{n}'&gt;&lt;/label&gt;
+        &lt;/td&gt;
+        &lt;td class='colIcon'&gt;
+          &lt;img id='icon{n}'/&gt;
+        &lt;/td&gt;
+        &lt;td&gt;
+          &lt;label id='descr{n}'&gt;&lt;/label&gt;
+        &lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;
+          &lt;label class='small-font'&gt;High:&lt;/label&gt;
+          &lt;label class='small-font' id='maxTemp{n}'&gt;&lt;/label&gt;
+          &lt;/br&gt;
+          &lt;label class='small-font'&gt;Low:&lt;/label&gt;
+          &lt;label class='small-font' id='minTemp{n}'&gt;&lt;/label&gt;
+        &lt;/td&gt;
+        &lt;td&gt;
+          &lt;label class='small-font'&gt;Wind:&lt;/label&gt;
+          &lt;label class='small-font' id='windSpeed{n}'&gt;&lt;/label&gt;
+          &lt;label class='small-font' id='windDir{n}'&gt;&lt;/label&gt;
+          &lt;/br&gt;
+          &lt;label class='small-font'&gt;Gusts:&lt;/label&gt;
+          &lt;label class='small-font' id='gustSpeed{n}'&gt;&lt;/label&gt;
+          &lt;label class='small-font' id='gustDir{n}'&gt;&lt;/label&gt;
+        &lt;/td&gt;
+        &lt;td&gt;
+          &lt;label class='small-font'&gt;Rain:&lt;/label&gt;
+          &lt;label class='small-font' id='rain{n}'&gt;&lt;/label&gt;
+          &lt;/br&gt;
+          &lt;label class='small-font'&gt;Snow:&lt;/label&gt;
+          &lt;label class='small-font' id='snow{n}'&gt;&lt;/label&gt;
+          &lt;/br&gt;
+          &lt;label class='small-font'&gt;Ice:&lt;/label&gt;
+          &lt;label class='small-font' id='ice{n}'&gt;&lt;/label&gt;
+        &lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+<p>Now we can manipulate the document model and create elements unique by ID 
+using the template for each forecast day:</p>
+<pre>async function getWeather(key) {
+  let url = appendAppKey(`${Constants.weatherFiveDayForecastUrl}/${key}`);
+  url = addParam(url, Constants.details, String.true);
+  let forecast = await get(url);
+  let dailyForecasts = forecast.json.DailyForecasts;
+  clearForecast();
+  dailyForecasts.forEach((forecast, idx) =&gt; { showForecast(forecast, idx); });
+}
+
+function showForecast(forecast, idx) {
+  let date = forecast.Date;
+  let dayOfWeek = new Date(date).toLocaleString('en-us', { weekday: 'long' });
+  let minTemp = forecast.Temperature.Minimum.Value + ' ' + forecast.Temperature.Minimum.Unit;
+  let maxTemp = forecast.Temperature.Maximum.Value + ' ' + forecast.Temperature.Maximum.Unit;
+  let icon = forecast.Day.Icon;
+  let descr = forecast.Day.LongPhrase;
+  let windSpeed = forecast.Day.Wind.Speed.Value + ' ' + forecast.Day.Wind.Speed.Unit;
+  let windDirection = forecast.Day.Wind.Direction.Localized;
+  let windGust = forecast.Day.WindGust.Speed.Value + ' ' + forecast.Day.WindGust.Speed.Unit;
+  let windGustDirection = forecast.Day.WindGust.Direction.Localized;
+  let rain = forecast.Day.Rain.Value + ' ' + forecast.Day.Rain.Unit;
+  let snow = forecast.Day.Snow.Value + ' ' + forecast.Day.Snow.Unit;
+  let ice = forecast.Day.Ice.Value + ' ' + forecast.Day.Ice.Unit;
+  let formattedIcon = parseInt(icon).toLocaleString(Constants.enUS, {minimumIntegerDigits: 2, useGrouping:false});
+  let iconUrl = `${Constants.iconUrl}${formattedIcon}-s.png`; // Ex: 01-s.png
+  let elForecastTemplate = el(Constants.elForecastTemplate);
+  let elForecastContainer = el(Constants.elForecastContainer);
+  elForecastHtml = String.replaceAll(elForecastTemplate.innerHTML, Constants.indexer, idx);
+  elForecastContainer.innerHTML += elForecastHtml;
+
+  el(`${Constants.dow}${idx}`).innerHTML = dayOfWeek;
+  el(`${Constants.descr}${idx}`).innerHTML = descr;
+  el(`${Constants.icon}${idx}`).src = iconUrl;
+  el(`${Constants.minTemp}${idx}`).innerHTML = minTemp;
+  el(`${Constants.maxTemp}${idx}`).innerHTML = maxTemp;
+  el(`${Constants.windSpeed}${idx}`).innerHTML = windSpeed;
+  el(`${Constants.windDir}${idx}`).innerHTML = windDirection;
+  el(`${Constants.gustSpeed}${idx}`).innerHTML = windGust;
+  el(`${Constants.gustDir}${idx}`).innerHTML = windGustDirection;
+  el(`${Constants.rain}${idx}`).innerHTML = rain;
+  el(`${Constants.snow}${idx}`).innerHTML = snow;
+  el(`${Constants.ice}${idx}`).innerHTML = ice;
+}</pre>
+<p>And the result is:</p>
+<p><img border="0" src="wfinal.png" width="903" height="745"></p>
+<h2>End of Part I</h2>
+<p>That concludes Part I.&nbsp; We have:</p>
+<ul>
+	<li>Eliminated Angular</li>
+	<li>Eliminated ASP.NET Core</li>
+	<li>Improved functionality</li>
+</ul>
+<p>Also, we've created an application that doesn't require a server -- it can be 
+loaded as file in Chrome!</p>
+<p><img border="0" src="w6.png" width="422" height="35"></p>
+<h2>Part II - Saving and Restoring Selections</h2>
+<p>Song's second article is entirely devoted to saving and restoring the user's 
+selection in the back end.&nbsp; Again, this is an excellent introduction in how 
+ASP.NET Core works with Angular.&nbsp; I have no complaints!&nbsp; But for our 
+purposes, we can use HTML5's <code>LocalStorage</code> feature.&nbsp; I would have used 
+cookies, but Chrome doesn't use cookies for pages rendered by the file system.&nbsp; 
+A thin wrapper suffices (I like to wrap things):</p>
+<pre>// Use HTML Web Storage because cookies don't work from local pages (file system)
+class LocalStore {
+  static put(name, value) {
+    window.localStorage.setItem(name, value);
+  }
+
+  static get (name) {
+    return window.localStorage.getItem(name);
+  }
+}</pre>
+<p>The async usage in the functions above becomes clearer when we look at how 
+the user's settings are restored.&nbsp; The initialization of the page becomes:</p>
+<pre>(function initialize() {
+  initializeElements();
+  wireUpEvents();
+  getCountries().then(usePreviousSettings);
+})();
+
+function usePreviousSettings() {
+  let countryId = LocalStore.get(Constants.cookieCountry);
+  let areaId = LocalStore.get(Constants.cookieArea);
+  let city = LocalStore.get(Constants.cookieCity);
+  let cityKey = LocalStore.get(Constants.cookieCityKey);
+
+  if (!String.isNullOrEmpty(city)) {
+    el(Constants.elCity).value = city;
+  }
+
+  if (!String.isNullOrEmpty(countryId)) {
+    el(Constants.elCountries).value = countryId;
+    onCountrySelected().then(() =&gt;
+    {
+      if (!String.isNullOrEmpty(areaId)) {
+        el(Constants.elAdminAreas).value = areaId;
+
+        if (!String.isNullOrEmpty(city)) {
+          cityEntered();
+        }
+      }
+    });
+  }
+}</pre>
+<p>Then we just need to save the values as they are selected and the city is 
+entered:</p>
+<pre>async function onCountrySelected() {
+  showError(Constants.countryRequired, false);
+  let id = el(Constants.elCountries).value; 
+  LocalStore.put(Constants.cookieCountry, id);     &lt;--- This is new
+  await getAdminAreas(id);
+}
+
+function onAdminAreaSelected() {
+  showError(Constants.areaRequired, false);
+  let id = el(Constants.elAdminAreas).value;
+  LocalStore.put(Constants.cookieArea, id);        &lt;--- This is new
+}</pre>
+<p>and in the <code>cityEntered</code> function:</p>
+<pre>...
+let key = verifyCities(cities.json);
+
+if (key === undefined) {
+  LocalStore.put(Constants.cookieCityKey, String.empty);
+  clearForecast();
+} else {
+  LocalStore.put(Constants.cookieCityKey, key);
+  getWeather(key);
+}</pre>
+<h2>Bells and Whistles</h2>
+<h3>Get Cities and Selecting More Than one Match</h3>
+<p>The default behavior of the dropdown already implements auto-complete: you 
+can start typing and the selection list will start navigating to the first 
+match.&nbsp; There's an implementation at
+<a href="https://www.w3schools.com/howto/howto_js_autocomplete.asp">
+W3Schools.com here</a> which I've totally lifted.&nbsp; I decided I'm not 
+actually keen on implementing it because as mentioned, the dropdown already 
+implements auto-complete.</p>
+<h2>Conclusion</h2>
+<p>What stood out for me the most in writing this was that, since I wasn't 
+dealing with the complexities of the Angular framework, nor in Part 2 creating a 
+backing database, endpoints, etc., I was instead able to pay more attention to 
+the edge cases of the AccuWeather API, particularly the issues around multiple 
+matching cities.&nbsp; In other words, I spent more time on the actual user 
+experience issues and considerably less time on the project setup, framework, 
+and coding issues.&nbsp; I think there's a lesson to be learned here -- these 
+frameworks have a geeky kind of allure to them, but how much of your time is 
+spent learning, coding, and debugging the nuances of the framework vs. achieving 
+meaningful user experience behaviors?&nbsp; How often do we overlook a simple 
+solution and instead implement something more complicated, that ends up having 
+its own edge cases and often enough complicates the UX?&nbsp; Personally, I 
+choose the UX every time over the &quot;ooh, I used framework X.&quot;&nbsp; </p>
+<p>Granted, not being able to put frameworks X, Y, and Z on your resume results 
+in two things:</p>
+<ol>
+	<li>Your ability to land a job is greatly reduced.</li>
+	<li>If you do land a job, you'll be pulling your hair out wondering why 
+	things are so complicated.</li>
+</ol>
+<p>So, at the end of the day, I suggest that unless you are entirely 100% in 
+control of your financial destiny, you ignore this article, suppress your WTF 
+reactions to the code base you'll be working on, take a deep breath and plunge 
+into the world of web frameworks.&nbsp; Who knows, you might find a team where 
+discipline actually is important and the framework becomes a useful tool in a 
+well designed web app, vs. the constant &quot;how do I do this?&quot; googling that I, for 
+one, experience working in a &quot;modern&quot; framework.&nbsp; Vue excluded since I have 
+no experience with them.</p>
+<p>In other words, be part of the crowd, not separate from the crowd.&nbsp; Bury 
+your head in the sand.&nbsp; Or if you prefer, &quot;join the dark side.&quot;</p>
+<p><img border="0" src="ostrich.jpg" width="367" height="550"></p>
+
+</body>
+
+</html>
