@@ -40,219 +40,6 @@ we have these web frameworks:</p>
 <p>And the selling points of all of these frameworks is that they are &quot;reactive&quot; 
 -- when the data changes, all the places on the page where the data is used is 
 automatically updated.</p>
-<h3>Reality</h3>
-<p>It takes discipline, not frameworks, to achieve the above 4 goals, and in my 
-experience, that discipline is almost always lacking.&nbsp; Instead, I see:</p>
-<ol>
-	<li>Organization foisted on the developer by what the framework thinks is 
-	the best way to organize the web page files.&nbsp; This is a really only a 
-	minor quibble, I don't have a problem with a framework by default organizing 
-	the files into the typical MVC - model, view, controller -- (or similar) 
-	architecture.&nbsp; What I do argue with is that an MVC architecture and its 
-	ilk are often unnecessarily burdensome.</li>
-	<li>Maintainability is quite dubious:<ol>
-		<li>A web app becomes locked in to a particular version and its bugs, 
-		and upgrading a large application is prohibitively costly.&nbsp; The 
-		result is that the developers end up maintaining an application that 
-		uses a framework that becomes years outdated, documentation becomes 
-		harder to find, and improvements in Javascript can't be used because the 
-		&quot;compiler&quot; of the obsolete framework doesn't handle things like HTML5 
-		syntax or Javascript fat arrow <code>=&gt;</code> functions.&nbsp; </li>
-		<li>New third party components that you might want to take advantage 
-		probably require the latest (or near latest) version of whatever 
-		framework is being used by the web app.&nbsp; Your only recourse is to 
-		use the component without the support of the framework and wire things 
-		up &quot;the old way.&quot;</li>
-	</ol>
-	</li>
-	<li>Testing -- let's be real here.&nbsp;
-<ol>
-	<li>Testing is done by exercising the web page to make sure it's doing the 
-	right thing.&nbsp; </li>
-	<li>Automating those tests is and will continue to be painful, particularly 
-	when dealing with asynchronous server-side calls that have unpredictable 
-	response times and data sets.&nbsp; </li>
-	<li>And the real nail in the coffin to automated testing (particularly tools 
-	that use element ID's to get/set values) is that these frameworks can mangle 
-	the HTML, creating internal ID values and HTML structures that make it all 
-	but impossible to find the element to which the test script needs access.</li>
-</ol>
-	</li>
-	<li>Reuse -- I've only ever seen limited reuse.&nbsp; Headers and footers 
-	are the most common, sometimes there are elements in certain pages that are 
-	reused in other pages.</li>
-</ol>
-<h4>An example of test automation issues in ExtJS</h4>
-<p>This is the mangled ID that ExtJS created for the input box in a &quot;dialog&quot; 
-form:</p>
-<pre>&lt;input id=&quot;combo-2365-inputEl&quot;</pre>
-<p>Close the dialog and re-open it, and I see:</p>
-<pre>&lt;input id=&quot;combo-2365-inputEl&quot;</pre>
-<p>Notice the number changed!&nbsp; How can I write an automated test script 
-when the element's ID is 1) arbitrary and 2) has no relationship to the &quot;id&quot; 
-that I gave it in the definition of the form?</p>
-<h3>The Cut and Paste is the Number One Killer Maintainability</h3>
-<p>I see this all the time:</p>
-<ol>
-	<li>I have some HTML where 90% of it can be reused but I have to make small 
-	tweaks for the specific page.&nbsp; Solution?&nbsp; Cut &amp; paste, add a new 
-	view, and make the 10% changes.</li>
-	<li>I have a Javascript function where 90% of it can be reused.&nbsp; 
-	Solution?&nbsp; Cut &amp; paste, make the changes, add the function with a 
-	different name in the same controller or create a new controller.</li>
-</ol>
-<p>Instead of refactoring the HTML to be more dynamic (that was one of the 
-points of these frameworks, right?) or refactor the calls to the function to be 
-more general purpose, it's easier, faster, and gets the change delivered quicker 
-simply by copy &amp; pasting.&nbsp; There's no discipline in that.&nbsp; Do that 
-enough times, and your single page app, which loads <i>everything</i> up front, 
-becomes slower and slower, even with minimization and content compressing.</p>
-<h3>Will the Real Model Please Stand Up?</h3>
-<p>In my opinion, the overhead of sheer typing is outrageous.&nbsp; We:</p>
-<ol>
-	<li>Start with the database schema</li>
-	<li>We recreate an entity model in the back-end</li>
-	<li>We recreate the model in the front-end.</li>
-	<li>We create a view that maps fields to the model in the front-end.</li>
-</ol>
-<p>While all of these steps can be avoided by a tool that generates each and 
-every one of those classes, files, JSON objects, and templates:</p>
-<ol>
-	<li>It usually creates unnecessary script that needs to be sent down to the 
-	browser, slowing down the website.</li>
-	<li>It often creates unnecessary serialization and deserialization as the 
-	data is sent down to the browser, again slowing down the website.</li>
-	<li>At some point (usually rather quickly), the tool becomes useless (unless 
-	it is very very good) because one or more of the models is customized with 
-	computations and/or formatters.&nbsp; So now when the real model (the DB 
-	schema) changes, you are required to manual update all the intermediary 
-	models. </li>
-</ol>
-<h3>My Solution</h3>
-<p>To reiterate, good organization, maintainability, ability to automate 
-testing, and reuse are not features that I've ever seen a framework actually 
-help me with.&nbsp; If I don't have the discipline to write Javascript with the 
-above 4 goals in mind, the framework will not help and in reality often hinders 
-testing.&nbsp; Personally, when I develop websites, my solution is to:</p>
-<ol>
-	<li>Not use any framework 
-at all.</li>
-	<li>Use third party components sparingly as third party components impact 
-	maintainability and ease of testing as well.</li>
-	<li>Avoid unnecessary models particularly when all I need is to serialize 
-	some records into JSON, deliver that to the browser and render it in the 
-	view.</li>
-	<li>Going the other direction holds as well -- either the entire record is 
-	sent up as JSON, deserialized into parameter-value pairs and inserted into 
-	the table, or specific fields are updated either as they change or when the 
-	user clicks on &quot;Update.&quot;&nbsp; Different endpoints for different purposes.</li>
-</ol>
-<h4>Style Guidelines</h4>
-<p>I also try to adhere to my own style guidelines.&nbsp; These are my own 
-guidelines and I'm just telling you what they are, not trying to foist them on 
-you.</p>
-<ul>
-	<li>I don't want to see any &quot;red&quot; in my Javascript.&nbsp; The color red is 
-	typically used by editors to indicate string constants.</li>
-</ul>
-<p>Wrong:</p>
-<pre><img border="0" src="ex1.png" width="322" height="24"></pre>
-<p>Right:</p>
-<p><img border="0" src="ex2.png" width="378" height="22"></p>
-<p>Or similar, the idea is to use a class with static getters for constants.&nbsp; 
-There are exceptions to this rule, of course, but they are conscious exceptions.</p>
-<ul>
-	<li>Callbacks are archaic -- use async/await</li>
-</ul>
-<p>The typical approach is to use a callback for a completion, either an 
-asynchronous operation or a function's &quot;I've done what I was supposed to do, now 
-what?&quot;</p>
-<p>Wrong:</p>
-<pre>function someFunction() {
-  getMyData(url, processMyData);
-}
-
-function processMyData(data) {
-  // do something
-}</pre>
-<p>Right:</p>
-<pre>async function getMyData() {
-  // do something, usually with a Promise
-}
-
-function someFunction() {
-  let data = await getMyData();
-  processMyData(data);  
-}</pre>
-<p>or:</p>
-<pre>function someFunction() {
-  getMyData().then((data) =&gt; processMyData(data));
-}</pre>
-<ul>
-	<li>Use fat arrows instead of <code>function</code></li>
-</ul>
-<p>Wrong:</p>
-<pre>function someFunction() {
-  getMyData().then(function (data) { processMyData(data);} );
-}</pre>
-<p>Right:</p>
-<pre>function someFunction() {
-  getMyData().then((data) =&gt; processMyData(data));
-}</pre>
-<ul>
-	<li>Use template literals</li>
-</ul>
-<p>This is a really minor one and even in my mind, questionable still, haha.</p>
-<p>Wrong:</p>
-<pre>return url + Constants.apiKeyName + '=' + Constants.apiKey;</pre>
-<p>Right:</p>
-<pre>return `${url}?${Constants.apiKeyName}=${Constants.apiKey}`;</pre>
-<ul>
-	<li>Don't Repeat Yourself (DRY)</li>
-</ul>
-<p>Don't really need to repeat why this is important, right?</p>
-<ul>
-	<li>High level functions should minimize flow control statements and look 
-	like a linear workflow as much as possible.</li>
-</ul>
-<p>If there's flow control statements (like if-else and loops) then refactor the 
-function into separate smaller functions.</p>
-<ul>
-	<li>Functions should be small!</li>
-</ul>
-<p>Shouldn't need to explain that one.&nbsp; Even if it's a one line function:</p>
-<p>Wrong:</p>
-<pre>let newStr = str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, &quot;\\$1&quot;);</pre>
-<p>Seriously?&nbsp; WTF does this do?</p>
-<p>Right:</p>
-<pre>static escapeRegExp(str) {
-  return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, &quot;\\$1&quot;);
-} </pre>
-<p>Oh, this escapes characters that would normally be interpreted in a regex.</p>
-<ul>
-	<li>Use <code>map</code>, <code>reduce</code>, and <code>filter</code> (MRF) instead of for loops</li>
-</ul>
-<p>Personally, I think for loops are archaic, particularly since MRF avoids 
-writing lots of &quot;if&quot; statements, creating temporary holding arrays and pushing 
-matching items into those arrays.</p>
-<ul>
-	<li>Use temporary variables</li>
-</ul>
-<p>Nothing makes debugging more annoying than inlining computations.</p>
-<p>Wrong:</p>
-<pre>function addParam(url, paramName, paramValue) {
-  return `${url}&amp;${paramName}=${paramValue}`;
-}
-</pre>
-<p>Right:</p>
-<pre>function addParam(url, paramName, paramValue) {
-  newUrl = `${url}&amp;${paramName}=${paramValue}`;
-
-  return newUrl;
-}</pre>
-<p>And that was a simple example.</p>
-<p>There are more, but that's the basic short and simple set of style guidelines 
-to which I like to adhere.</p>
 <h2>Let the De-Structuring Begin!</h2>
 <p>So let's start with 
 <a href="https://www.codeproject.com/Articles/1274513/Angular-7-with-NET-Core-2-2-Global-Weather-Part-1">Part I of the Global Weather article</a>.</p>
@@ -663,7 +450,6 @@ function usePreviousSettings() {
   let countryId = LocalStore.get(Constants.cookieCountry);
   let areaId = LocalStore.get(Constants.cookieArea);
   let city = LocalStore.get(Constants.cookieCity);
-  let cityKey = LocalStore.get(Constants.cookieCityKey);
 
   if (!String.isNullOrEmpty(city)) {
     el(Constants.elCity).value = city;
@@ -710,45 +496,344 @@ if (key === undefined) {
 }</pre>
 <h2>Bells and Whistles</h2>
 <h3>Get Cities and Selecting More Than one Match</h3>
-<p>The default behavior of the dropdown already implements auto-complete: you 
-can start typing and the selection list will start navigating to the first 
-match.&nbsp; There's an implementation at
-<a href="https://www.w3schools.com/howto/howto_js_autocomplete.asp">
-W3Schools.com here</a> which I've totally lifted.&nbsp; I decided I'm not 
-actually keen on implementing it because as mentioned, the dropdown already 
-implements auto-complete.</p>
+<p>In the case when there is more than one matching city in the country or the 
+country and admin area, we present a list of cities from which the user must 
+choose:</p>
+<p><img border="0" src="w7.png" width="711" height="228"></p>
+<h3>Optional Admin Area</h3>
+<p>In the example in Song's article, there is only one Melbourne in all of 
+Australia, so the user can omit selecting the admin area:</p>
+<p><img border="0" src="w8.png" width="430" height="255"></p>
+<p>Conversely, if there is more than one city of that name in the selected 
+country, the &quot;select the city&quot; dropdown appears so the user can narrow down the 
+search:</p>
+<p><img border="0" src="w9.png" width="712" height="353"></p>
+<h3>Resetting the UI</h3>
+<p>Whenever a new country or admin area is selected, we want to clear the 
+relevant sections and error notices.&nbsp; The city key is also reset in the 
+store because no city has been selected, and refreshing the browser should not 
+display any new forecast.&nbsp; This is handled by the <code>reset</code> function:</p>
+<pre>function reset(state) {
+  switch (state) {
+    case Constants.stateCountrySelected:
+      LocalStore.put(Constants.cookieArea, String.empty);
+      LocalStore.put(Constants.cookieCity, String.empty);
+      el(Constants.elCity).value = String.empty;
+      break;
+
+    case Constants.stateAdminAreaSelected:
+      LocalStore.put(Constants.cookieCity, String.empty);
+      el(Constants.elCity).value = String.empty;
+      break;
+
+    case Constants.stateCityEntered:
+      // Nothing happens in this reset state other than the default below.
+      break;
+  }
+
+  showError(Constants.countryRequired, false);
+  showError(Constants.areaRequired, false);
+  showError(Constants.cityNotFound, false);
+  showError(Constants.cityMoreThanOne, false);
+  showError(Constants.cityRequired, false);
+  el(Constants.elSelectCity).style.visibility = Constants.hidden;
+  el(Constants.elForecastContainer).innerHTML = String.empty;
+  LocalStore.put(Constants.cookieCityKey, String.empty);
+}</pre>
+<h3>Setting Focus on Next Item</h3>
+<p>It's nice to automatically set the focus on the next item once the user has 
+made their selection using the dropdown list.&nbsp; This is simple enough in the 
+onchange event handlers:</p>
+<pre>function setFocus(elName) {
+  el(elName).focus();
+}
+
+function wireUpEvents() {
+  el(Constants.elCountries).onchange = () =&gt; {
+    reset(Constants.stateCountrySelected);
+    onCountrySelected();
+    setFocus(Constants.elAdminAreas);              &lt;-- added this
+  }
+
+  el(Constants.elAdminAreas).onchange = () =&gt; {
+    reset(Constants.stateAdminAreaSelected);
+    onAdminAreaSelected();
+    setFocus(Constants.elCity);                    &lt;-- added this
+  }
+
+  el(Constants.elCity).onkeyup = (event) =&gt; {
+    reset(Constants.stateCityEntered);
+    onKey(event.keyCode, 13, onCityEntered);
+  }
+
+  el(Constants.elCities).onchange = onCitySelected;
+}</pre>
+<h2>Part III - Reuse</h2>
+<p>OK, I can't help myself -- it should be obvious that the above code is not 
+reusable.&nbsp; Furthermore, there's no separation of the view and controller, 
+the very thing that the Vue tutorial video points out as being an issue when 
+what used to be server-side code is moved to the client.&nbsp; So how do we make 
+all this reusable in a simple way?&nbsp; As an aside, one thing I loathe in many 
+of these web frameworks is the use of strings to reference &quot;objects&quot; like views 
+and controllers.&nbsp; ExtJS is definitely a sinner in this regard, for example:</p>
+<pre>var someController = this.getController('someController');</pre>
+<p>or from the Angular documentation:</p>
+<pre>myApp.controller('GreetingController' ...</pre>
+<p>In my no-framework code, the only two pieces that need to be modularized for 
+re-use is the view and the controller.&nbsp; So let's separate these out into 
+actual class instances.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 <h2>Conclusion</h2>
-<p>What stood out for me the most in writing this was that, since I wasn't 
+<p>What stood out for me the most in writing this code was that, since I wasn't 
 dealing with the complexities of the Angular framework, nor in Part 2 creating a 
 backing database, endpoints, etc., I was instead able to pay more attention to 
 the edge cases of the AccuWeather API, particularly the issues around multiple 
-matching cities.&nbsp; In other words, I spent more time on the actual user 
-experience issues and considerably less time on the project setup, framework, 
+matching cities.&nbsp; I also spent time adding some friendly behaviors to the 
+UI, such as clearing selections and the weather when the user changes a 
+selection and focusing on the next element when a selection is made.&nbsp; In other words, I spent more time on the actual user 
+experience (UX) and considerably less time on the project setup, framework, 
 and coding issues.&nbsp; I think there's a lesson to be learned here -- these 
 frameworks have a geeky kind of allure to them, but how much of your time is 
 spent learning, coding, and debugging the nuances of the framework vs. achieving 
 meaningful user experience behaviors?&nbsp; How often do we overlook a simple 
-solution and instead implement something more complicated, that ends up having 
+solution and instead implement something more complicated that ends up having 
 its own edge cases and often enough complicates the UX?&nbsp; Personally, I 
-choose the UX every time over the &quot;ooh, I used framework X.&quot;&nbsp; </p>
+like to choose the UX every time over the &quot;ooh, look, I used framework X.&quot;&nbsp; </p>
+<h3>Discipline over Frameworks</h3>
+<p>It takes discipline, not frameworks, to achieve the above 4 goals, and in my 
+experience, that discipline is almost always lacking.&nbsp; Instead, I see:</p>
+<ol>
+	<li>Organization foisted on the developer by what the framework thinks is 
+	the best way to organize the web page files.&nbsp; This is a really only a 
+	minor quibble, I don't have a problem with a framework by default organizing 
+	the files into the typical MVC - model, view, controller -- (or similar) 
+	architecture.&nbsp; What I do argue with is that an MVC architecture and its 
+	ilk are often unnecessarily burdensome.</li>
+	<li>Maintainability is quite dubious:<ol>
+		<li>A web app becomes locked in to a particular version and its bugs, 
+		and upgrading a large application is prohibitively costly.&nbsp; The 
+		result is that the developers end up maintaining an application that 
+		uses a framework that becomes years outdated, documentation becomes 
+		harder to find, and improvements in Javascript can't be used because the 
+		&quot;compiler&quot; of the obsolete framework doesn't handle things like HTML5 
+		syntax or Javascript fat arrow <code>=&gt;</code> functions.&nbsp; </li>
+		<li>New third party components that you might want to take advantage 
+		probably require the latest (or near latest) version of whatever 
+		framework is being used by the web app.&nbsp; Your only recourse is to 
+		use the component without the support of the framework and wire things 
+		up &quot;the old way.&quot;</li>
+	</ol>
+	</li>
+	<li>Testing -- let's be real here.&nbsp;
+<ol>
+	<li>Testing is done by exercising the web page to make sure it's doing the 
+	right thing.&nbsp; </li>
+	<li>Automating those tests is and will continue to be painful, particularly 
+	when dealing with asynchronous server-side calls that have unpredictable 
+	response times and data sets.&nbsp; </li>
+	<li>And the real nail in the coffin to automated testing (particularly tools 
+	that use element ID's to get/set values) is that these frameworks can mangle 
+	the HTML, creating internal ID values and HTML structures that make it all 
+	but impossible to find the element to which the test script needs access.</li>
+</ol>
+	</li>
+	<li>Reuse -- I've only ever seen limited reuse.&nbsp; Headers and footers 
+	are the most common, sometimes there are elements in certain pages that are 
+	reused in other pages.</li>
+</ol>
+<h4>An example of test automation issues in ExtJS</h4>
+<p>This is the mangled ID that ExtJS created for the input box in a &quot;dialog&quot; 
+form:</p>
+<pre>&lt;input id=&quot;combo-2365-inputEl&quot;</pre>
+<p>Close the dialog and re-open it, and I see:</p>
+<pre>&lt;input id=&quot;combo-2365-inputEl&quot;</pre>
+<p>Notice the number changed!&nbsp; How can I write an automated test script 
+when the element's ID is 1) arbitrary and 2) has no relationship to the &quot;id&quot; 
+that I gave it in the definition of the form?</p>
+<h3>Cut and Paste is the Number One Killer Maintainability</h3>
+<p>I see this all the time:</p>
+<ol>
+	<li>I have some HTML where 90% of it can be reused but I have to make small 
+	tweaks for the specific page.&nbsp; Solution?&nbsp; Cut &amp; paste, add a new 
+	view, and make the 10% changes.</li>
+	<li>I have a Javascript function where 90% of it can be reused.&nbsp; 
+	Solution?&nbsp; Cut &amp; paste, make the changes, add the function with a 
+	different name in the same controller or create a new controller.</li>
+</ol>
+<p>Instead of refactoring the HTML to be more dynamic (that was one of the 
+points of these frameworks, right?) or refactor the calls to the function to be 
+more general purpose, it's easier, faster, and gets the change delivered quicker 
+simply by copy &amp; pasting.&nbsp; There's no discipline in that.&nbsp; Do that 
+enough times, and your single page app, which loads <i>everything</i> up front, 
+becomes slower and slower, even with minimization and content compressing.</p>
+<h3>Will the Real Model Please Stand Up?</h3>
+<p>In my opinion, the overhead of sheer typing is outrageous.&nbsp; We:</p>
+<ol>
+	<li>Start with the database schema</li>
+	<li>We recreate an entity model in the back-end</li>
+	<li>We recreate the model in the front-end.</li>
+	<li>We create a view that maps fields to the model in the front-end.</li>
+</ol>
+<p>While all of these steps can be avoided by a tool that generates each and 
+every one of those classes, files, JSON objects, and templates:</p>
+<ol>
+	<li>It usually creates unnecessary script that needs to be sent down to the 
+	browser, slowing down the website.</li>
+	<li>It often creates unnecessary serialization and deserialization as the 
+	data is sent down to the browser, again slowing down the website.</li>
+	<li>At some point (usually rather quickly), the tool becomes useless (unless 
+	it is very very good) because one or more of the models is customized with 
+	computations and/or formatters.&nbsp; So now when the real model (the DB 
+	schema) changes, you are required to manual update all the intermediary 
+	models. </li>
+</ol>
+<h3>My Solution</h3>
+<p>To reiterate, good organization, maintainability, ability to automate 
+testing, and reuse are not features that I've ever seen a framework actually 
+help me with.&nbsp; If I don't have the discipline to write Javascript with the 
+above 4 goals in mind, the framework will not help and in reality often hinders 
+testing.&nbsp; Personally, when I develop websites, my solution is to:</p>
+<ol>
+	<li>Not use any framework 
+at all.</li>
+	<li>Use third party components sparingly as third party components impact 
+	maintainability and ease of testing as well.</li>
+	<li>Avoid unnecessary models particularly when all I need is to serialize 
+	some records into JSON, deliver that to the browser and render it in the 
+	view.</li>
+	<li>Going the other direction holds as well -- either the entire record is 
+	sent up as JSON, deserialized into parameter-value pairs and inserted into 
+	the table, or specific fields are updated either as they change or when the 
+	user clicks on &quot;Update.&quot;&nbsp; Different endpoints for different purposes.</li>
+</ol>
+<h3>My Style Guidelines</h3>
+<p>I also try to adhere to my own style guidelines.&nbsp; These are my own 
+guidelines and I'm just telling you what they are, not trying to foist them on 
+you.</p>
+<ul>
+	<li>I don't want to see any &quot;red&quot; in my Javascript.&nbsp; The color red is 
+	typically used by editors to indicate string constants.</li>
+</ul>
+<p>Wrong:</p>
+<pre><img border="0" src="ex1.png" width="322" height="24"></pre>
+<p>Right:</p>
+<p><img border="0" src="ex2.png" width="378" height="22"></p>
+<p>Or similar, the idea is to use a class with static getters for constants.&nbsp; 
+There are exceptions to this rule, of course, but they are conscious exceptions.</p>
+<ul>
+	<li>Callbacks are archaic -- use async/await</li>
+</ul>
+<p>The typical approach is to use a callback for a completion, either an 
+asynchronous operation or a function's &quot;I've done what I was supposed to do, now 
+what?&quot;</p>
+<p>Wrong:</p>
+<pre>function someFunction() {
+  getMyData(url, processMyData);
+}
+
+function processMyData(data) {
+  // do something
+}</pre>
+<p>Right:</p>
+<pre>async function getMyData() {
+  // do something, usually with a Promise
+}
+
+function someFunction() {
+  let data = await getMyData();
+  processMyData(data);  
+}</pre>
+<p>or:</p>
+<pre>function someFunction() {
+  getMyData().then((data) =&gt; processMyData(data));
+}</pre>
+<ul>
+	<li>Use fat arrows instead of <code>function</code></li>
+</ul>
+<p>Wrong:</p>
+<pre>function someFunction() {
+  getMyData().then(function (data) { processMyData(data);} );
+}</pre>
+<p>Right:</p>
+<pre>function someFunction() {
+  getMyData().then((data) =&gt; processMyData(data));
+}</pre>
+<ul>
+	<li>Use template literals</li>
+</ul>
+<p>This is a really minor one and even in my mind, questionable still, haha.</p>
+<p>Wrong:</p>
+<pre>return url + Constants.apiKeyName + '=' + Constants.apiKey;</pre>
+<p>Right:</p>
+<pre>return `${url}?${Constants.apiKeyName}=${Constants.apiKey}`;</pre>
+<ul>
+	<li>Don't Repeat Yourself (DRY)</li>
+</ul>
+<p>Don't really need to repeat why this is important, right?</p>
+<ul>
+	<li>High level functions should minimize flow control statements and look 
+	like a linear workflow as much as possible.</li>
+</ul>
+<p>If there's flow control statements (like if-else and loops) then refactor the 
+function into separate smaller functions.</p>
+<ul>
+	<li>Functions should be small!</li>
+</ul>
+<p>Shouldn't need to explain that one.&nbsp; Even if it's a one line function:</p>
+<p>Wrong:</p>
+<pre>let newStr = str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, &quot;\\$1&quot;);</pre>
+<p>Seriously?&nbsp; WTF does this do?</p>
+<p>Right:</p>
+<pre>static escapeRegExp(str) {
+  return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, &quot;\\$1&quot;);
+} </pre>
+<p>Oh, this escapes characters that would normally be interpreted in a regex.</p>
+<ul>
+	<li>Use <code>map</code>, <code>reduce</code>, and <code>filter</code> (MRF) instead of for loops</li>
+</ul>
+<p>Personally, I think for loops are archaic, particularly since MRF avoids 
+writing lots of &quot;if&quot; statements, creating temporary holding arrays and pushing 
+matching items into those arrays.</p>
+<ul>
+	<li>Use temporary variables</li>
+</ul>
+<p>Nothing makes debugging more annoying than inlining computations.</p>
+<p>Wrong:</p>
+<pre>function addParam(url, paramName, paramValue) {
+  return `${url}&amp;${paramName}=${paramValue}`;
+}
+</pre>
+<p>Right:</p>
+<pre>function addParam(url, paramName, paramValue) {
+  newUrl = `${url}&amp;${paramName}=${paramValue}`;
+
+  return newUrl;
+}</pre>
+<p>And that was a simple example.</p>
+<h3>Final Words</h3>
 <p>Granted, not being able to put frameworks X, Y, and Z on your resume results 
 in two things:</p>
 <ol>
 	<li>Your ability to land a job is greatly reduced.</li>
 	<li>If you do land a job, you'll be pulling your hair out wondering why 
-	things are so complicated.</li>
+	things are so complicated though that might happen anyways.</li>
 </ol>
 <p>So, at the end of the day, I suggest that unless you are entirely 100% in 
 control of your financial destiny, you ignore this article, suppress your WTF 
 reactions to the code base you'll be working on, take a deep breath and plunge 
 into the world of web frameworks.&nbsp; Who knows, you might find a team where 
 discipline actually is important and the framework becomes a useful tool in a 
-well designed web app, vs. the constant &quot;how do I do this?&quot; googling that I, for 
-one, experience working in a &quot;modern&quot; framework.&nbsp; Vue excluded since I have 
-no experience with them.</p>
+well designed web app vs. the constant &quot;how do I do this?&quot; googling that I, for 
+one, experience working in a &quot;modern&quot; framework.&nbsp; (Vue excluded since I have 
+no experience with them.)</p>
 <p>In other words, be part of the crowd, not separate from the crowd.&nbsp; Bury 
 your head in the sand.&nbsp; Or if you prefer, &quot;join the dark side.&quot;</p>
-<p><img border="0" src="ostrich.jpg" width="367" height="550"></p>
+<p><img border="0" src="ostrich.jpg" width="367" height="550">
+<img border="0" src="jointhedarkside.jpg" width="277" height="182"></p>
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 
 </body>
 
