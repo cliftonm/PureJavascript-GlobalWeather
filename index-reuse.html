@@ -65,35 +65,50 @@
 
 <html>
     <body>
-        <div class='frame'>
+        <div class='frame' id='app'>
+            <table class='fixed-layout'>
+                <tbody>
+                    <tr>
+                        <td id='city1' />
+                        <td id='city2' />
+                    </tr>
+                    <tr>
+                        <td id='forecast1' />
+                        <td id='forecast2' />
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class='hidden' ; id='citySelectionTemplate'>
             <div>
                 <label class='label'>Country:</label>
-                <select id='countries'></select>
-                <label class='error' id='countryRequired'>Please select a country.</label>
+                <select id='<T>countries'></select>
+                <label class='error' id='<T>countryRequired'>Please select a country.</label>
             </div>
 
             <div class='vspacer10'>
                 <label class='label'>Admin Area:</label>
-                <select id='adminAreas'></select>
-                <label class='error' id='areaRequired'>Please select an area.</label>
+                <select id='<T>adminAreas'></select>
+                <label class='error' id='<T>areaRequired'>Please select an area.</label>
             </div>
 
             <div class='vspacer10'></div>
 
             <div>
                 <label class='label'>City / Town:</label>
-                <input id='city'></input>
-                <label class='error' id='cityRequired'>Please enter a city.</label>
-                <label class='error' id='cityNotFound'>City not found!</label>
-                <label class='error' id='cityMoreThanOne'>More than one city found!</label>
+                <input id='<T>city'>
+                <label class='error' id='<T>cityRequired'>Please enter a city.</label>
+                <label class='error' id='<T>cityNotFound'>City not found!</label>
+                <label class='error' id='<T>cityMoreThanOne'>More than one city found!</label>
             </div>
 
-            <div class='hidden vspacer10' id='selectCity'>
+            <div class='hidden vspacer10' id='<T>selectCity'>
                 <label class='label'>Please select one:</label>
-                <select id='cities'></select>
+                <select id='<T>cities'></select>
             </div>
 
-            <div id='forecastContainer'>
+            <div id='<T>forecastContainer'>
             </div>
         </div>
 
@@ -102,41 +117,41 @@
                 <tbody>
                     <tr>
                         <td class='colDayOfWeek'>
-                            <label id='dow{n}'></label>
+                            <label id='<T>dow{n}'></label>
                         </td>
                         <td class='colIcon'>
-                            <img id='icon{n}'/>
+                            <img id='<T>icon{n}'/>
                         </td>
                         <td>
-                            <label id='descr{n}'></label>
+                            <label id='<T>descr{n}'></label>
                         </td>
                     </tr>
                     <tr>
                         <td>
                             <label class='small-font'>High:</label>
-                            <label class='small-font' id='maxTemp{n}'></label>
-                            </br>
+                            <label class='small-font' id='<T>maxTemp{n}'></label>
+                            <br/>
                             <label class='small-font'>Low:</label>
-                            <label class='small-font' id='minTemp{n}'></label>
+                            <label class='small-font' id='<T>minTemp{n}'></label>
                         </td>
                         <td>
                             <label class='small-font'>Wind:</label>
-                            <label class='small-font' id='windSpeed{n}'></label>
-                            <label class='small-font' id='windDir{n}'></label>
-                            </br>
+                            <label class='small-font' id='<T>windSpeed{n}'></label>
+                            <label class='small-font' id='<T>windDir{n}'></label>
+                            <br/>
                             <label class='small-font'>Gusts:</label>
-                            <label class='small-font' id='gustSpeed{n}'></label>
-                            <label class='small-font' id='gustDir{n}'></label>
+                            <label class='small-font' id='<T>gustSpeed{n}'></label>
+                            <label class='small-font' id='<T>gustDir{n}'></label>
                         </td>
                         <td>
                             <label class='small-font'>Rain:</label>
-                            <label class='small-font' id='rain{n}'></label>
-                            </br>
+                            <label class='small-font' id='<T>rain{n}'></label>
+                            <br/>
                             <label class='small-font'>Snow:</label>
-                            <label class='small-font' id='snow{n}'></label>
-                            </br>
+                            <label class='small-font' id='<T>snow{n}'></label>
+                            <br/>
                             <label class='small-font'>Ice:</label>
-                            <label class='small-font' id='ice{n}'></label>
+                            <label class='small-font' id='<T>ice{n}'></label>
                         </td>
                     </tr>
                 </tbody>
@@ -236,6 +251,10 @@
         static get elSelectCity() {return 'selectCity'; }
         static get elCities() { return 'cities'; }
 
+        static get elCitySelection1() { return 'city1'; }
+        static get elCitySelection2() { return 'city2'; }
+        static get elCitySelectionTemplate() { return 'citySelectionTemplate'; }
+
         static get restGET() { return 'GET'; }
         static get enUS() {return 'en-US'; }
 
@@ -259,337 +278,448 @@
         static get stateCityEntered() { return 2; }
     }
 
-    function el(id) { 
-        return document.getElementById(id); 
-    }    
+    class ViewBase {
+        constructor(tname = '') {
+            this.templateName = tname;
+        }
 
-    function standardErrorHandler(err) {
-        alert(err.statusText);
+        // Return element by it's given ID.
+        el(id) { 
+            return document.getElementById(id); 
+        }    
+
+        // Return element by our view's template name plus the given ID.
+        tel(id) {
+            return document.getElementById(this.templateName + id);
+        }
+
+        addTemplate(elName, templateElementName) {
+            let templateHtml = this.el(templateElementName).innerHTML;
+            templateHtml = String.replaceAll(templateHtml, '<T>', this.templateName);
+            this.el(elName).innerHTML = templateHtml;
+        }
+
+        focus(id) {
+            this.tel(id).focus();
+        }
+
+        onKeyUp(id, keyVal, fnc) {
+            let el = this.tel(id);
+            el.onkeyup = (event) => {
+                this.onKey(event.keyCode, keyVal, () => fnc(this, el.value));
+            }
+        }
+
+        onChange(id, fnc) {
+            let el = this.tel(id);
+            el.onchange = () => fnc(this, el.value);
+        }
+
+        onKey(keyCode, matchValue, callback) {
+            if (keyCode == matchValue) {
+                callback();
+            }
+        }
+    } 
+
+    class ControllerBase {
+        constructor(view) {
+            this.view = view;
+        }
     }
 
-    function get(api) {
-        return new Promise(resolve => {
-            let xhr = new XMLHttpRequest();
+    class AppView extends ViewBase {
+        constructor() {
+            super();
+        }
+    }
 
-            xhr.onload = () => {
-                resolve({json: JSON.parse(xhr.response), status: xhr.status});
-            };
+    class CitySelectionView extends ViewBase {
+        constructor(tname = '') {
+            super(tname);
+        }
 
-            xhr.onerror = () => { 
-                resolve({json: JSON.parse(String.emptyJSON), status: xhr.status, statusText: xhr.statusText});
+        initializeElements() {
+            let elOptions = this.tel(Constants.elAdminAreas).options;
+            elOptions[0] = new Option(Constants.selectArea, String.empty);
+        }
 
-                if (xhr.statusText != String.empty) {
-                    standardErrorHandler({status: xhr.status, statusText: xhr.statusText});
+        showCitySelector(json) {
+            this.tel(Constants.elSelectCity).style.visibility = Constants.visible;
+            this.clearDropdown(el(Constants.elCities));
+
+            // Get some info the user can use to select the desired city, sorted so that cities that don't have parents are shown first.
+            let areas = json.map(item => {
+                let pc = item.ParentCity;
+                let parentCity = String.empty;
+
+                if (pc) {
+                    parentCity = `Parent City: ${item.ParentCity.LocalizedName}`;
                 }
-            };
 
-            xhr.open(Constants.restGET, api, true);
-            xhr.send();
-        });
-    }
+                let info = `${item.Country.LocalizedName} ${item.AdministrativeArea.LocalizedName} ${item.LocalizedName} ${item.PrimaryPostalCode} ${parentCity}`;
+                return { name: info, id: item.Key, parent: parentCity };
+            }).sort((a, b) => { return a.parent < b.parent ? -1 : 1 });
 
-    function appendAppKey(url) {
-        return `${url}?${Constants.apiKeyName}=${Constants.apiKey}`;
-    }
-
-    async function getCountries() {
-        let url = appendAppKey(Constants.countriesUrl);
-        let countryList = await get(url);
-        showCountries(countryList.json);
-    }
-
-    async function getAdminAreas(locId) {
-        let url = appendAppKey(`${Constants.adminAreasUrl}/${locId}`);
-        let areaList = await get(url);
-        showAdminAreas(areaList.json);
-    }
-
-    function addParam(url, paramName, paramValue) {
-        let newUrl = `${url}&${paramName}=${paramValue}`;
-
-        return newUrl;
-    }
-
-    function verifyCities(json) {
-        let key = undefined;
-
-        if (json.length == 0) {
-            showError(Constants.cityNotFound);
-        } else if (json.length > 1) {
-            // If we have a cityKey, then don't display the error.
-            let cityKey = LocalStore.get(Constants.cookieCityKey);
-
-            if (String.isNullOrEmpty(cityKey)) {
-                showError(Constants.cityMoreThanOne);
-                showCitySelector(json);
-            }
-            else {
-                key = cityKey;
-            }
-        } else {
-            key = json[0].Key;
+            let elOptions = this.tel(Constants.elCities).options;
+            elOptions[0] = new Option(Constants.selectCity, String.empty);
+            areas.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id); });
         }
 
-        return key;
-    }
+        // TODO: View shouldn't be touching LocalStore
 
-    function showCitySelector(json) {
-        el(Constants.elSelectCity).style.visibility = Constants.visible;
-        clearDropdown(el(Constants.elCities));
+        reset(state) {
+            switch (state) {
+                case Constants.stateCountrySelected:
+                    LocalStore.put(Constants.cookieArea, String.empty);
+                    LocalStore.put(Constants.cookieCity, String.empty);
+                    this.tel(Constants.elCity).value = String.empty;
+                    break;
 
-        // Get some info the user can use to select the desired city, sorted so that cities that don't have parents are shown first.
-        let areas = json.map(item => {
-            let pc = item.ParentCity;
-            let parentCity = String.empty;
-            
-            if (pc) {
-              parentCity = `Parent City: ${item.ParentCity.LocalizedName}`;
+                case Constants.stateAdminAreaSelected:
+                    LocalStore.put(Constants.cookieCity, String.empty);
+                    this.tel(Constants.elCity).value = String.empty;
+                    break;
+
+                case Constants.stateCityEntered:
+                    // Nothing happens in this reset state other than the default below.
+                    break;
             }
 
-            let info = `${item.Country.LocalizedName} ${item.AdministrativeArea.LocalizedName} ${item.LocalizedName} ${item.PrimaryPostalCode} ${parentCity}`;
-            return {name: info, id: item.Key, parent: parentCity};
-            }).sort((a, b) => {return a.parent < b.parent ? -1 : 1});
-
-        let elOptions = el(Constants.elCities).options;            
-        elOptions[0] = new Option(Constants.selectCity, String.empty);
-        areas.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
-    }
-
-    function getCities(countryId, areaId, city) {
-        let url = String.empty;
-
-        if (String.isNullOrEmpty(areaId)) {
-            url = appendAppKey(Constants.citySearchUrl);
-        } else {
-            url = appendAppKey(Constants.fullCitySearchUrl);
+            this.showError(Constants.countryRequired, false);
+            this.showError(Constants.areaRequired, false);
+            this.showError(Constants.cityNotFound, false);
+            this.showError(Constants.cityMoreThanOne, false);
+            this.showError(Constants.cityRequired, false);
+            this.tel(Constants.elSelectCity).style.visibility = Constants.hidden;
         }
 
-        url = addParam(url, Constants.queryKey, city);
-        url = url.replace(Constants.countryId, countryId).replace(Constants.areaId, areaId);
-
-        return get(url);
-    }
-
-    function reset(state) {
-        switch (state) {
-            case Constants.stateCountrySelected:
-                LocalStore.put(Constants.cookieArea, String.empty);
-                LocalStore.put(Constants.cookieCity, String.empty);
-                el(Constants.elCity).value = String.empty;
-                break;
-
-            case Constants.stateAdminAreaSelected:
-                LocalStore.put(Constants.cookieCity, String.empty);
-                el(Constants.elCity).value = String.empty;
-                break;
-
-            case Constants.stateCityEntered:
-                // Nothing happens in this reset state other than the default below.
-                break;
+        clearDropdown(el) {
+            this.tel(el).innerHTML = String.empty;
         }
 
-        showError(Constants.countryRequired, false);
-        showError(Constants.areaRequired, false);
-        showError(Constants.cityNotFound, false);
-        showError(Constants.cityMoreThanOne, false);
-        showError(Constants.cityRequired, false);
-        el(Constants.elSelectCity).style.visibility = Constants.hidden;
-        clearForecast();
-        LocalStore.put(Constants.cookieCityKey, String.empty);
+        showError(elId, state = true) {
+            this.tel(elId).style.visibility = state ? Constants.visible : Constants.hidden;
+
+            return !state;
+        }
+
+        showCountries(json) {
+            this.clearDropdown(Constants.elCountries);
+            let countries = json.map(item => { return { name: item.EnglishName, id: item.ID }; })
+                .sort((a, b) => { return a.name < b.name ? -1 : 1 });
+            let elOptions = this.tel(Constants.elCountries).options;
+            elOptions[0] = new Option(Constants.selectCountry, String.empty);
+            countries.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id); });
+        }
+
+        showAdminAreas(json) {
+            this.clearDropdown(Constants.elAdminAreas);
+            let areas = json.map(item => { return { name: item.EnglishName, id: item.ID }; })
+                .sort((a, b) => { return a.name < b.name ? -1 : 1 });
+            let elOptions = this.tel(Constants.elAdminAreas).options;
+            elOptions[0] = new Option(Constants.selectArea, String.empty);
+            areas.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id); });
+        }
     }
 
-    function clearDropdown(el) {
-        el.innerHTML = String.empty;
+    class ForecastView extends ViewBase {
+        constructor(tname = '') {
+            super(tname);
+        }
+
+        clearForecast() {
+            this.tel(Constants.elForecastContainer).innerHTML = String.empty;
+        }
+
+        showForecast(forecast, idx) {
+            let date = forecast.Date;
+            let dayOfWeek = new Date(date).toLocaleString('en-us', { weekday: 'long' });
+            let minTemp = forecast.Temperature.Minimum.Value + ' ' + forecast.Temperature.Minimum.Unit;
+            let maxTemp = forecast.Temperature.Maximum.Value + ' ' + forecast.Temperature.Maximum.Unit;
+            let icon = forecast.Day.Icon;
+            let descr = forecast.Day.LongPhrase;
+            let windSpeed = forecast.Day.Wind.Speed.Value + ' ' + forecast.Day.Wind.Speed.Unit;
+            let windDirection = forecast.Day.Wind.Direction.Localized;
+            let windGust = forecast.Day.WindGust.Speed.Value + ' ' + forecast.Day.WindGust.Speed.Unit;
+            let windGustDirection = forecast.Day.WindGust.Direction.Localized;
+            let rain = forecast.Day.Rain.Value + ' ' + forecast.Day.Rain.Unit;
+            let snow = forecast.Day.Snow.Value + ' ' + forecast.Day.Snow.Unit;
+            let ice = forecast.Day.Ice.Value + ' ' + forecast.Day.Ice.Unit;
+            let formattedIcon = parseInt(icon).toLocaleString(Constants.enUS, { minimumIntegerDigits: 2, useGrouping: false });
+            let iconUrl = `${Constants.iconUrl}${formattedIcon}-s.png`;           // Ex: 01-s.png
+            let elForecastTemplate = this.el(Constants.elForecastTemplate);       // not view specific so we use "el"
+            let elForecastContainer = this.tel(Constants.elForecastContainer);    // view specific, so we use "tel"
+            let elForecastHtml = String.replaceAll(elForecastTemplate.innerHTML, Constants.indexer, idx);
+            elForecastHtml = String.replaceAll(elForecastHtml, '<T>', this.templateName);
+
+            elForecastContainer.innerHTML += elForecastHtml;
+
+            this.tel(`${Constants.dow}${idx}`).innerHTML = dayOfWeek;
+            this.tel(`${Constants.descr}${idx}`).innerHTML = descr;
+            this.tel(`${Constants.icon}${idx}`).src = iconUrl;
+            this.tel(`${Constants.minTemp}${idx}`).innerHTML = minTemp;
+            this.tel(`${Constants.maxTemp}${idx}`).innerHTML = maxTemp;
+            this.tel(`${Constants.windSpeed}${idx}`).innerHTML = windSpeed;
+            this.tel(`${Constants.windDir}${idx}`).innerHTML = windDirection;
+            this.tel(`${Constants.gustSpeed}${idx}`).innerHTML = windGust;
+            this.tel(`${Constants.gustDir}${idx}`).innerHTML = windGustDirection;
+            this.tel(`${Constants.rain}${idx}`).innerHTML = rain;
+            this.tel(`${Constants.snow}${idx}`).innerHTML = snow;
+            this.tel(`${Constants.ice}${idx}`).innerHTML = ice;
+        }
     }
 
-    function showError(elId, state = true) {
-        el(elId).style.visibility = state ? Constants.visible : Constants.hidden;
+    class WeatherController extends ControllerBase {
+        constructor(citySelectionView, forecastView) {
+            super();
+            this.citySelectionView = citySelectionView;
+            this.forecastView = forecastView;
+            this.wireUpEvents();
+        }
 
-        return !state;
-    }
+        wireUpEvents() {
+            this.citySelectionView.onChange(Constants.elCountries, (view, value) => {
+                view.reset(Constants.stateCountrySelected);
+                this.forecastView.clearForecast();
+                view.showError(Constants.countryRequired, false);
+                view.focus(Constants.elAdminAreas);
+                this.onCountrySelected(value);
+            });
 
-    function showCountries(json) {
-        clearDropdown(el(Constants.elCountries));
-        let countries = json.map(item => {return {name: item.EnglishName, id: item.ID};})
-            .sort((a, b) => {return a.name < b.name ? -1 : 1});
-        let elOptions = el(Constants.elCountries).options;
-        elOptions[0] = new Option(Constants.selectCountry, String.empty);
-        countries.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
-    }
+            this.citySelectionView.onChange(Constants.elAdminAreas, (view, value) => {
+                view.reset(Constants.stateAdminAreaSelected);
+                this.forecastView.clearForecast();
+                view.showError(Constants.areaRequired, false);
+                view.tel(Constants.elCity).focus();
+                this.onAdminAreaSelected(value);
+            });
 
-    function showAdminAreas(json) {
-        clearDropdown(el(Constants.elAdminAreas));
-        let areas = json.map(item => {return {name: item.EnglishName, id: item.ID};})
-            .sort((a, b) => {return a.name < b.name ? -1 : 1});
-        let elOptions = el(Constants.elAdminAreas).options;            
-        elOptions[0] = new Option(Constants.selectArea, String.empty);
-        areas.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id);});
-    }
+            this.citySelectionView.onKeyUp(Constants.elCity, 13, (view, value) => {
+                view.reset(Constants.stateCityEntered);
+                this.forecastView.clearForecast();
+                this.onCityEntered(value);
+            });
 
-    async function onCountrySelected() {
-        showError(Constants.countryRequired, false);
-        let id = el(Constants.elCountries).value;    
-        LocalStore.put(Constants.cookieCountry, id);
-        await getAdminAreas(id);
-    }
+            this.citySelectionView.onChange(Constants.elCities, (view, key) => {
+                view.showError(Constants.cityMoreThanOne, false);
+                this.forecastView.clearForecast();
+                this.onCitySelected(key);
+            });
+        }
 
-    function onAdminAreaSelected() {
-        showError(Constants.areaRequired, false);
-        let id = el(Constants.elAdminAreas).value;
-        LocalStore.put(Constants.cookieArea, id);
-    }
+        finishInitialization() {
+            // We need "this", so we wrap the call in an anonymous function.
+            this.getCountries().then(() => {
+                this.usePreviousSettings();
+            });
+        }
 
-    function onCitySelected() {
-        showError(Constants.cityMoreThanOne, false);
-        let key = el(Constants.elCities).value;
-        LocalStore.put(Constants.cookieCityKey, key);
-        getWeather(key);
-    }
+        appendAppKey(url) {
+            return `${url}?${Constants.apiKeyName}=${Constants.apiKey}`;
+        }
 
-    async function onCityEntered() {
-        let countryId = el(Constants.elCountries).value;
-        let areaId = el(Constants.elAdminAreas).value;
-        let city = el(Constants.elCity).value;
-        LocalStore.put(Constants.cookieCity, city);
-        let ok = true;
+        async getCountries() {
+            let url = this.appendAppKey(Constants.countriesUrl);
+            let countryList = await Helpers.get(url);
+            this.citySelectionView.showCountries(countryList.json);
+        }
 
-        // Verify selections:
-        ok &= showError(Constants.countryRequired, countryId == String.empty);
-        // ok &= showError(Constants.areaRequired, areaId == String.empty);
-        ok &= showError(Constants.cityRequired, city == String.empty);
+        async getAdminAreas(locId) {
+            let url = this.appendAppKey(`${Constants.adminAreasUrl}/${locId}`);
+            let areaList = await Helpers.get(url);
+            this.citySelectionView.showAdminAreas(areaList.json);
+        }
 
-        if (ok) {
-            let cities = await getCities(countryId, areaId, city);
-            let key = verifyCities(cities.json);
+        getCities(countryId, areaId, city) {
+            let url = String.empty;
 
-            if (key === undefined) {
-                LocalStore.put(Constants.cookieCityKey, String.empty);
-                clearForecast();
+            if (String.isNullOrEmpty(areaId)) {
+                url = this.appendAppKey(Constants.citySearchUrl);
             } else {
-                LocalStore.put(Constants.cookieCityKey, key);
-                getWeather(key);
+                url = this.appendAppKey(Constants.fullCitySearchUrl);
+            }
+
+            url = this.addParam(url, Constants.queryKey, city);
+            url = url.replace(Constants.countryId, countryId).replace(Constants.areaId, areaId);
+
+            return Helpers.get(url);
+        }
+
+        addParam(url, paramName, paramValue) {
+            let newUrl = `${url}&${paramName}=${paramValue}`;
+
+            return newUrl;
+        }
+
+        verifyCities(json) {
+            let key = undefined;
+
+            if (json.length == 0) {
+                this.citySelectionView.showError(Constants.cityNotFound);
+            } else if (json.length > 1) {
+                // If we have a cityKey, then don't display the error.
+                let cityKey = LocalStore.get(Constants.cookieCityKey);
+
+                if (String.isNullOrEmpty(cityKey)) {
+                    this.citySelectionView.showError(Constants.cityMoreThanOne);
+                    this.citySelectionView.showCitySelector(json);
+                }
+                else {
+                    key = cityKey;
+                }
+            } else {
+                key = json[0].Key;
+            }
+
+            return key;
+        }
+
+        async onCountrySelected(id) {
+            LocalStore.put(Constants.cookieCountry, id);
+            await this.getAdminAreas(id);
+        }
+
+        onAdminAreaSelected(id) {
+            LocalStore.put(Constants.cookieArea, id);
+        }
+
+        onCitySelected(_, key) {
+            LocalStore.put(Constants.cookieCityKey, key);
+            this.getWeather(key);
+        }
+
+        async onCityEntered(city) {
+            let countryId = this.citySelectionView.tel(Constants.elCountries).value;
+            let areaId = this.citySelectionView.tel(Constants.elAdminAreas).value;
+            LocalStore.put(Constants.cookieCity, city);
+            let ok = true;
+
+            // Verify selections:
+            ok &= this.citySelectionView.showError(Constants.countryRequired, countryId == String.empty);
+            // ok &= showError(Constants.areaRequired, areaId == String.empty);
+            ok &= this.citySelectionView.showError(Constants.cityRequired, city == String.empty);
+
+            if (ok) {
+                let cities = await this.getCities(countryId, areaId, city);
+                let key = this.verifyCities(cities.json);
+
+                if (key === undefined) {
+                    LocalStore.put(Constants.cookieCityKey, String.empty);
+                    this.forecastView.clearForecast();
+                } else {
+                    LocalStore.put(Constants.cookieCityKey, key);
+                    this.getWeather(key);
+                }
             }
         }
-    }
 
-    function onKey(keyCode, matchValue, callback) {
-        if (keyCode == matchValue) {
-            callback();
-        }
-    }
+        usePreviousSettings() {
+            let countryId = LocalStore.get(Constants.cookieCountry);
+            let areaId = LocalStore.get(Constants.cookieArea);
+            let city = LocalStore.get(Constants.cookieCity);
 
-    function setFocus(elName) {
-        el(elName).focus();
-    }
+            if (!String.isNullOrEmpty(city)) {
+                this.citySelectionView.tel(Constants.elCity).value = city;
+            }
 
-    function wireUpEvents() {
-        el(Constants.elCountries).onchange = () => {
-            reset(Constants.stateCountrySelected);
-            onCountrySelected();
-            setFocus(Constants.elAdminAreas);
-        }
+            if (!String.isNullOrEmpty(countryId)) {
+                // TODO: Make this a call to set the value.  Getting is fine?, setting should be done by the view.
+                this.citySelectionView.tel(Constants.elCountries).value = countryId;
+                this.onCountrySelected().then(() => {
+                    if (!String.isNullOrEmpty(areaId)) {
+                        this.citySelectionView.tel(Constants.elAdminAreas).value = areaId;
 
-        el(Constants.elAdminAreas).onchange = () => {
-            reset(Constants.stateAdminAreaSelected);
-            onAdminAreaSelected();
-            setFocus(Constants.elCity);
-        }
+                        if (!String.isNullOrEmpty(city)) {
+                            this.onCityEntered();
+                        }
+                    } else {
+                        let cityKey = LocalStore.get(Constants.cookieCityKey);
 
-        el(Constants.elCity).onkeyup = (event) => {
-            reset(Constants.stateCityEntered);
-            onKey(event.keyCode, 13, onCityEntered);
-        }
-
-        el(Constants.elCities).onchange = onCitySelected;
-    }
-
-    function clearForecast() {
-        el(Constants.elForecastContainer).innerHTML = String.empty;
-    }
-
-    function usePreviousSettings() {
-        let countryId = LocalStore.get(Constants.cookieCountry);
-        let areaId = LocalStore.get(Constants.cookieArea);
-        let city = LocalStore.get(Constants.cookieCity);
-
-        if (!String.isNullOrEmpty(city)) {
-            el(Constants.elCity).value = city;
-        }
-
-        if (!String.isNullOrEmpty(countryId)) {
-            el(Constants.elCountries).value = countryId;
-            onCountrySelected().then(() =>
-            {
-                if (!String.isNullOrEmpty(areaId)) {
-                    el(Constants.elAdminAreas).value = areaId;
-
-                    if (!String.isNullOrEmpty(city)) {
-                        onCityEntered();
+                        if (!String.isNullOrEmpty(cityKey)) {
+                            this.onCityEntered();
+                        }
                     }
-                } else {
-                    let cityKey = LocalStore.get(Constants.cookieCityKey);
+                });
+            }
+        }
 
-                    if (!String.isNullOrEmpty(cityKey)) {
-                        onCityEntered();
+        async getWeather(key) {
+            let url = this.appendAppKey(`${Constants.weatherFiveDayForecastUrl}/${key}`);
+            url = this.addParam(url, Constants.details, String.true);
+            let forecast = await Helpers.get(url);
+            let dailyForecasts = forecast.json.DailyForecasts;
+            this.forecastView.clearForecast();
+            dailyForecasts.forEach((forecast, idx) => { this.forecastView.showForecast(forecast, idx); });
+        }
+    }
+
+    class AppController extends ControllerBase {
+        constructor(appView) {
+            super(appView);
+        }
+
+        static get t1() { return 't1'; }
+        static get t2() { return 't2'; }
+
+        initialize() {
+            this.initializeViews();
+            this.initializeControllers();
+
+            this.citySelectionView1.initializeElements();
+            this.citySelectionView2.initializeElements();
+
+            this.weatherController1.finishInitialization();
+            this.weatherController2.finishInitialization();
+        }
+
+        initializeViews() {
+            this.citySelectionView1 = new CitySelectionView(AppController.t1);
+            this.citySelectionView2 = new CitySelectionView(AppController.t2);
+            this.citySelectionView1.addTemplate(Constants.elCitySelection1, Constants.elCitySelectionTemplate);
+            this.citySelectionView2.addTemplate(Constants.elCitySelection2, Constants.elCitySelectionTemplate);
+
+            this.forecastView1 = new ForecastView(AppController.t1);
+            this.forecastView2 = new ForecastView(AppController.t2);
+        }
+
+        initializeControllers() {
+            this.weatherController1 = new WeatherController(this.citySelectionView1, this.forecastView1);
+            this.weatherController2 = new WeatherController(this.citySelectionView2, this.forecastView2);
+        }
+    }
+
+    class Helpers {
+        static standardErrorHandler(err) {
+            alert(err.statusText);
+        }
+
+        static get(api) {
+            return new Promise(resolve => {
+                let xhr = new XMLHttpRequest();
+
+                xhr.onload = () => {
+                    resolve({ json: JSON.parse(xhr.response), status: xhr.status });
+                };
+
+                xhr.onerror = () => {
+                    resolve({ json: JSON.parse(String.emptyJSON), status: xhr.status, statusText: xhr.statusText });
+
+                    if (xhr.statusText != String.empty) {
+                        Helpers.standardErrorHandler({ status: xhr.status, statusText: xhr.statusText });
                     }
-                }
+                };
+
+                xhr.open(Constants.restGET, api, true);
+                xhr.send();
             });
         }
     }
 
-    async function getWeather(key) {
-        let url = appendAppKey(`${Constants.weatherFiveDayForecastUrl}/${key}`);
-        url = addParam(url, Constants.details, String.true);
-        let forecast = await get(url);
-        let dailyForecasts = forecast.json.DailyForecasts;
-        clearForecast();
-        dailyForecasts.forEach((forecast, idx) => { showForecast(forecast, idx); });
-    }
-
-    function showForecast(forecast, idx) {
-        let date = forecast.Date;
-        let dayOfWeek = new Date(date).toLocaleString('en-us', {  weekday: 'long' });
-        let minTemp = forecast.Temperature.Minimum.Value + ' ' + forecast.Temperature.Minimum.Unit;
-        let maxTemp = forecast.Temperature.Maximum.Value + ' ' + forecast.Temperature.Maximum.Unit;
-        let icon = forecast.Day.Icon;
-        let descr = forecast.Day.LongPhrase;
-        let windSpeed = forecast.Day.Wind.Speed.Value + ' ' + forecast.Day.Wind.Speed.Unit;
-        let windDirection = forecast.Day.Wind.Direction.Localized;
-        let windGust = forecast.Day.WindGust.Speed.Value + ' ' + forecast.Day.WindGust.Speed.Unit;
-        let windGustDirection = forecast.Day.WindGust.Direction.Localized;
-        let rain = forecast.Day.Rain.Value + ' ' + forecast.Day.Rain.Unit;
-        let snow = forecast.Day.Snow.Value + ' ' + forecast.Day.Snow.Unit;
-        let ice = forecast.Day.Ice.Value + ' ' + forecast.Day.Ice.Unit;
-        let formattedIcon = parseInt(icon).toLocaleString(Constants.enUS, {minimumIntegerDigits: 2, useGrouping:false});
-        let iconUrl = `${Constants.iconUrl}${formattedIcon}-s.png`;           // Ex: 01-s.png
-        let elForecastTemplate = el(Constants.elForecastTemplate);
-        let elForecastContainer = el(Constants.elForecastContainer);
-        elForecastHtml = String.replaceAll(elForecastTemplate.innerHTML, Constants.indexer, idx);
-        elForecastContainer.innerHTML += elForecastHtml;
-
-        el(`${Constants.dow}${idx}`).innerHTML = dayOfWeek;
-        el(`${Constants.descr}${idx}`).innerHTML = descr;
-        el(`${Constants.icon}${idx}`).src = iconUrl;
-        el(`${Constants.minTemp}${idx}`).innerHTML = minTemp;
-        el(`${Constants.maxTemp}${idx}`).innerHTML = maxTemp;
-        el(`${Constants.windSpeed}${idx}`).innerHTML = windSpeed;
-        el(`${Constants.windDir}${idx}`).innerHTML = windDirection;
-        el(`${Constants.gustSpeed}${idx}`).innerHTML = windGust;
-        el(`${Constants.gustDir}${idx}`).innerHTML = windGustDirection;
-        el(`${Constants.rain}${idx}`).innerHTML = rain;
-        el(`${Constants.snow}${idx}`).innerHTML = snow;
-        el(`${Constants.ice}${idx}`).innerHTML = ice;
-    }
-
-    function initializeElements() {
-        let elOptions = el(Constants.elAdminAreas).options;
-        elOptions[0] = new Option(Constants.selectArea, String.empty);
-    }
-
     (function initialize() {
-        initializeElements();
-        wireUpEvents();
-        getCountries().then(usePreviousSettings);
+        let appView = new AppView();
+        let appController = new AppController(appView);
+        appController.initialize();
     })();
     
 </script>

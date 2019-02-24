@@ -41,8 +41,8 @@ we have these web frameworks:</p>
 -- when the data changes, all the places on the page where the data is used is 
 automatically updated.</p>
 <h2>Let the De-Structuring Begin!</h2>
-<p>So let's start with 
-<a href="https://www.codeproject.com/Articles/1274513/Angular-7-with-NET-Core-2-2-Global-Weather-Part-1">Part I of the Global Weather article</a>.</p>
+<p>Fire up notepad (or your favorite HTML editor) and let's start with 
+<a href="https://www.codeproject.com/Articles/1274513/Angular-7-with-NET-Core-2-2-Global-Weather-Part-1">Part I of the Global Weather article</a>!</p>
 <h3>What We Don't Need</h3>
 <p>Here's what we don't need to do:</p>
 <ol>
@@ -80,7 +80,7 @@ the article where we finally get to creating the HTML for the form.&nbsp; </p>
   &lt;/div&gt;
   &lt;div class='vspacer10'&gt;
     &lt;label class='label'&gt;City / Town:&lt;/label&gt;
-    &lt;input id='city'&gt;&lt;/input&gt;
+    &lt;input id='city'&gt;
     &lt;label class='error' id='cityRequired'&gt;Please enter a city.&lt;/label&gt;
     &lt;label class='error' id='cityNotFound'&gt;City not found!&lt;/label&gt;
     &lt;label class='error' id='cityMoreThanOne'&gt;More than one city found!&lt;/label&gt;
@@ -337,7 +337,7 @@ rendered as a table:</p>
         &lt;td&gt;
           &lt;label class='small-font'&gt;High:&lt;/label&gt;
           &lt;label class='small-font' id='maxTemp{n}'&gt;&lt;/label&gt;
-          &lt;/br&gt;
+          &lt;br/&gt;
           &lt;label class='small-font'&gt;Low:&lt;/label&gt;
           &lt;label class='small-font' id='minTemp{n}'&gt;&lt;/label&gt;
         &lt;/td&gt;
@@ -345,7 +345,7 @@ rendered as a table:</p>
           &lt;label class='small-font'&gt;Wind:&lt;/label&gt;
           &lt;label class='small-font' id='windSpeed{n}'&gt;&lt;/label&gt;
           &lt;label class='small-font' id='windDir{n}'&gt;&lt;/label&gt;
-          &lt;/br&gt;
+          &lt;br/&gt;
           &lt;label class='small-font'&gt;Gusts:&lt;/label&gt;
           &lt;label class='small-font' id='gustSpeed{n}'&gt;&lt;/label&gt;
           &lt;label class='small-font' id='gustDir{n}'&gt;&lt;/label&gt;
@@ -353,10 +353,10 @@ rendered as a table:</p>
         &lt;td&gt;
           &lt;label class='small-font'&gt;Rain:&lt;/label&gt;
           &lt;label class='small-font' id='rain{n}'&gt;&lt;/label&gt;
-          &lt;/br&gt;
+          &lt;br/&gt;
           &lt;label class='small-font'&gt;Snow:&lt;/label&gt;
           &lt;label class='small-font' id='snow{n}'&gt;&lt;/label&gt;
-          &lt;/br&gt;
+          &lt;br/&gt;
           &lt;label class='small-font'&gt;Ice:&lt;/label&gt;
           &lt;label class='small-font' id='ice{n}'&gt;&lt;/label&gt;
         &lt;/td&gt;
@@ -393,7 +393,8 @@ function showForecast(forecast, idx) {
   let iconUrl = `${Constants.iconUrl}${formattedIcon}-s.png`; // Ex: 01-s.png
   let elForecastTemplate = el(Constants.elForecastTemplate);
   let elForecastContainer = el(Constants.elForecastContainer);
-  elForecastHtml = String.replaceAll(elForecastTemplate.innerHTML, Constants.indexer, idx);
+  let elForecastHtml = String.replaceAll(elForecastTemplate.innerHTML, Constants.indexer, idx);
+
   elForecastContainer.innerHTML += elForecastHtml;
 
   el(`${Constants.dow}${idx}`).innerHTML = dayOfWeek;
@@ -580,8 +581,131 @@ and controllers.&nbsp; ExtJS is definitely a sinner in this regard, for example:
 <p>or from the Angular documentation:</p>
 <pre>myApp.controller('GreetingController' ...</pre>
 <p>In my no-framework code, the only two pieces that need to be modularized for 
-re-use is the view and the controller.&nbsp; So let's separate these out into 
-actual class instances.</p>
+re-use is the view and the controller.&nbsp; The HTML part of the view must be 
+treated like a template and we need two classes: one for the view behavior and 
+one for the controller logic.&nbsp; To avoid string names, we create actual 
+instances in which we pass the controller to the view, and the view to the 
+controller.&nbsp; While this creates a 1:1 relationship between views and 
+controllers, I don't have a problem with that as typically I find that a view 
+talks to one controller, and the controller might have additional controllers 
+that it references.&nbsp; And yes, this approach (not using strings to reference 
+views, models, controllers, stores, etc) is probably easily accomplished with 
+existing web frameworks, but it requires discipline.&nbsp; The separation we 
+want to achieve is:</p>
+<ol>
+	<li>The view handles its state -- the HTML document object model</li>
+	<li>The controller responds to view events, manipulates the data, and gives 
+	the view the data to render.</li>
+</ol>
+<p>Of course, creating classes as containers for the various functions now means 
+we have to <code>this</code> here, <code>this</code> there, <code>this</code> everywhere.&nbsp; Blech.</p>
+<p>One immediate difference is that the <code>el</code> helper function (to avoid lots of 
+typing) belongs in the view.&nbsp; In fact, it belongs in the base class of any 
+view:</p>
+<pre>class ViewBase {
+  constructor() {
+  }
+
+  el(id) { 
+    return document.getElementById(id); 
+  } 
+
+
+  addTemplate(elName, templateName) {
+    this.el(elName).innerHTML = this.el(templateName).innerHTML;
+  }
+}</pre>
+<p>To demonstrate reuse, we'll refactor the code so that the forecast of two 
+cities can be viewed at the same time for comparison.&nbsp; A proof of concept 
+is achieved by defining where things go and their templates:</p>
+<pre>&lt;div class='frame' id='app'&gt;
+  &lt;table&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td id='city1' /&gt;
+        &lt;td id='city2' /&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td id='forecast1' /&gt;
+        &lt;td id='forecast2' /&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/div&gt;
+
+&lt;div class='hidden' ; id='citySelectionTemplate'&gt;
+  &lt;div&gt;
+    &lt;label class='label'&gt;Country:&lt;/label&gt;
+    &lt;select id='countries'&gt;&lt;/select&gt;
+    &lt;label class='error' id='countryRequired'&gt;Please select a country.&lt;/label&gt;
+  &lt;/div&gt;
+  ... etc ...</pre>
+<p>Initializing an app controller on page load:</p>
+<pre>(function initialize() {
+  let appView = new AppView();
+  let appController = new AppController(appView);
+  appController.initialize();
+})();</pre>
+<p>and assigning the templates their designated areas on the page:</p>
+<pre>class AppController extends ControllerBase {
+  constructor(appView) {
+    super(appView);
+  }
+
+  initialize() {
+    this.view.addTemplate(Constants.elCitySelection1, Constants.elCitySelectionTemplate);
+    this.view.addTemplate(Constants.elCitySelection2, Constants.elCitySelectionTemplate);
+  }
+}</pre>
+<p>Resulting in:</p>
+<p><img border="0" src="w10.png" width="773" height="107"></p>
+<h3>Pesky ID Values</h3>
+<p>Now, the annoying thing is of course that the ID's are no longer unique.&nbsp; 
+So we need a <i>disciplined</i> approach to how we want to handle this.&nbsp; 
+The should-be-obvious solution is to prepend the ID with a template name, and 
+let's be evil about it and use <code>&lt;T&gt;</code> a la C# templates, haha, like this:</p>
+<pre>&lt;div class='hidden' ; id='citySelectionTemplate'&gt;
+  &lt;div&gt;
+    &lt;label class='label'&gt;Country:&lt;/label&gt;
+    &lt;select id='&lt;T&gt;countries'&gt;&lt;/select&gt;
+    &lt;label class='error' id='&lt;T&gt;countryRequired'&gt;Please select a country.&lt;/label&gt;
+  &lt;/div&gt;
+  ... etc ...</pre>
+<p>So now we can create our views, passing in the template name and adding the 
+desired template to the desired area of our app view:</p>
+<pre>static get t1() { return 't1'; }
+static get t2() { return 't2'; }
+
+initialize() {
+  this.citySelectionView1 = new CitySelectionView(AppController.t1);
+  this.citySelectionView2 = new CitySelectionView(AppController.t2);
+  this.citySelectionView1.addTemplate(Constants.elCitySelection1, Constants.elCitySelectionTemplate);
+  this.citySelectionView2.addTemplate(Constants.elCitySelection2, Constants.elCitySelectionTemplate);
+}</pre>
+<p>Refactor the addTemplate code:</p>
+<pre>addTemplate(elName, templateElementName) {
+  let templateHtml = this.el(templateElementName).innerHTML;
+  templateHtml = String.replaceAll(templateHtml, '&lt;T&gt;', this.templateName);
+  this.el(elName).innerHTML = templateHtml;
+}
+</pre>
+<p>and we get unique ID's:</p>
+<p><img border="0" src="w11.png" width="604" height="126"></p>
+<p>We also create a templated <code>tel</code> helper to prepend the template name:</p>
+<pre>tel(id) {
+  return document.getElementById(this.templateName + id);
+}</pre>
+Next 
+we initialize the controllers:<pre>initializeControllers() {
+  this.weatherController1 = new WeatherController(this.citySelectionView1, this.forecastView1);
+  this.weatherController2 = new WeatherCOntroller(this.citySelectionView2, this.forecastView2);
+}</pre>
+<h3>Events</h3>
+<p>The controller is responsible for wiring up events from the view's DOM to 
+controller methods.&nbsp; In other words, the view doesn't know what the 
+controller wants to get notified about -- the controller knows, so it should be 
+the one responsible to wire up the events in the view's DOM.&nbsp; It does this 
+with some help from the base class view methods:</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <h2>Conclusion</h2>
@@ -651,6 +775,16 @@ form:</p>
 <p>Notice the number changed!&nbsp; How can I write an automated test script 
 when the element's ID is 1) arbitrary and 2) has no relationship to the &quot;id&quot; 
 that I gave it in the definition of the form?</p>
+<h4>Experience Leads to Discipline</h4>
+<p>You can't just start with discipline.&nbsp; I'm a firm believer that it takes 
+experience (sometimes years of experience) in doing things the &quot;wrong&quot; way to 
+discover the &quot;better&quot; way and incorporate those lessons into a discipline.&nbsp; 
+With web frameworks and third party components popping up like weeds, not to 
+mention the so-called benefits of rapid delivery, when does a developer have 
+time to become a master in these technologies?&nbsp; When does the developer 
+have time to gain enough experience with something to apply some discipline?&nbsp; 
+We are, in my opinion, doing a disservice to ourselves by this rapid change, and 
+again in my opinion, open source is largely to blame for this.</p>
 <h3>Cut and Paste is the Number One Killer Maintainability</h3>
 <p>I see this all the time:</p>
 <ol>
