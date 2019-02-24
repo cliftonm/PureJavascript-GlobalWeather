@@ -541,34 +541,6 @@ display any new forecast.&nbsp; This is handled by the <code>reset</code> functi
   el(Constants.elForecastContainer).innerHTML = String.empty;
   LocalStore.put(Constants.cookieCityKey, String.empty);
 }</pre>
-<h3>Setting Focus on Next Item</h3>
-<p>It's nice to automatically set the focus on the next item once the user has 
-made their selection using the dropdown list.&nbsp; This is simple enough in the 
-onchange event handlers:</p>
-<pre>function setFocus(elName) {
-  el(elName).focus();
-}
-
-function wireUpEvents() {
-  el(Constants.elCountries).onchange = () =&gt; {
-    reset(Constants.stateCountrySelected);
-    onCountrySelected();
-    setFocus(Constants.elAdminAreas);              &lt;-- added this
-  }
-
-  el(Constants.elAdminAreas).onchange = () =&gt; {
-    reset(Constants.stateAdminAreaSelected);
-    onAdminAreaSelected();
-    setFocus(Constants.elCity);                    &lt;-- added this
-  }
-
-  el(Constants.elCity).onkeyup = (event) =&gt; {
-    reset(Constants.stateCityEntered);
-    onKey(event.keyCode, 13, onCityEntered);
-  }
-
-  el(Constants.elCities).onchange = onCitySelected;
-}</pre>
 <h2>Part III - Reuse</h2>
 <p>OK, I can't help myself -- it should be obvious that the above code is not 
 reusable.&nbsp; Furthermore, there's no separation of the view and controller, 
@@ -714,8 +686,8 @@ dealing with the complexities of the Angular framework, nor in Part 2 creating a
 backing database, endpoints, etc., I was instead able to pay more attention to 
 the edge cases of the AccuWeather API, particularly the issues around multiple 
 matching cities.&nbsp; I also spent time adding some friendly behaviors to the 
-UI, such as clearing selections and the weather when the user changes a 
-selection and focusing on the next element when a selection is made.&nbsp; In other words, I spent more time on the actual user 
+UI, such as clearing the selections and the weather when the user changes a 
+selection.&nbsp; In other words, I spent more time on the actual user 
 experience (UX) and considerably less time on the project setup, framework, 
 and coding issues.&nbsp; I think there's a lesson to be learned here -- these 
 frameworks have a geeky kind of allure to them, but how much of your time is 

@@ -24,6 +24,10 @@
         width: 120px;
         display: inline-block;
     }
+
+    .inline {
+        display: inline-block;
+    }
     
     .vspacer10 {
         padding-top: 10px;
@@ -66,21 +70,33 @@
 <html>
     <body>
         <div class='frame' id='app'>
-            <table class='fixed-layout'>
-                <tbody>
-                    <tr>
-                        <td id='city1' />
-                        <td id='city2' />
-                    </tr>
-                    <tr>
-                        <td id='forecast1' />
-                        <td id='forecast2' />
-                    </tr>
-                </tbody>
-            </table>
+            <div class="inline">
+                <table class='fixed-layout'>
+                    <tbody>
+                        <tr>
+                            <td id='city1' />
+                        </tr>
+                        <tr>
+                            <td id='forecast1' />
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="inline">
+                <table class='fixed-layout'>
+                    <tbody>
+                        <tr>
+                            <td id='city2' />
+                        </tr>
+                        <tr>
+                            <td id='forecast2' />
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class='hidden' ; id='citySelectionTemplate'>
+        <div class='hidden' id='citySelectionTemplate'>
             <div>
                 <label class='label'>Country:</label>
                 <select id='<T>countries'></select>
@@ -344,6 +360,14 @@
             elOptions[0] = new Option(Constants.selectArea, String.empty);
         }
 
+        clearErrors() {
+            this.showError(Constants.countryRequired, false);
+            this.showError(Constants.areaRequired, false);
+            this.showError(Constants.cityNotFound, false);
+            this.showError(Constants.cityMoreThanOne, false);
+            this.showError(Constants.cityRequired, false);
+        }
+
         showCitySelector(json) {
             this.tel(Constants.elSelectCity).style.visibility = Constants.visible;
             this.clearDropdown(el(Constants.elCities));
@@ -364,34 +388,6 @@
             let elOptions = this.tel(Constants.elCities).options;
             elOptions[0] = new Option(Constants.selectCity, String.empty);
             areas.map(item => { elOptions[elOptions.length] = new Option(item.name, item.id); });
-        }
-
-        // TODO: View shouldn't be touching LocalStore
-
-        reset(state) {
-            switch (state) {
-                case Constants.stateCountrySelected:
-                    LocalStore.put(Constants.cookieArea, String.empty);
-                    LocalStore.put(Constants.cookieCity, String.empty);
-                    this.tel(Constants.elCity).value = String.empty;
-                    break;
-
-                case Constants.stateAdminAreaSelected:
-                    LocalStore.put(Constants.cookieCity, String.empty);
-                    this.tel(Constants.elCity).value = String.empty;
-                    break;
-
-                case Constants.stateCityEntered:
-                    // Nothing happens in this reset state other than the default below.
-                    break;
-            }
-
-            this.showError(Constants.countryRequired, false);
-            this.showError(Constants.areaRequired, false);
-            this.showError(Constants.cityNotFound, false);
-            this.showError(Constants.cityMoreThanOne, false);
-            this.showError(Constants.cityRequired, false);
-            this.tel(Constants.elSelectCity).style.visibility = Constants.hidden;
         }
 
         clearDropdown(el) {
@@ -471,8 +467,9 @@
     }
 
     class WeatherController extends ControllerBase {
-        constructor(citySelectionView, forecastView) {
+        constructor(tname, citySelectionView, forecastView) {
             super();
+            this.templateName = tname;
             this.citySelectionView = citySelectionView;
             this.forecastView = forecastView;
             this.wireUpEvents();
@@ -480,23 +477,23 @@
 
         wireUpEvents() {
             this.citySelectionView.onChange(Constants.elCountries, (view, value) => {
-                view.reset(Constants.stateCountrySelected);
+                this.reset(Constants.stateCountrySelected);
                 this.forecastView.clearForecast();
                 view.showError(Constants.countryRequired, false);
-                view.focus(Constants.elAdminAreas);
+                // view.focus(Constants.elAdminAreas);
                 this.onCountrySelected(value);
             });
 
             this.citySelectionView.onChange(Constants.elAdminAreas, (view, value) => {
-                view.reset(Constants.stateAdminAreaSelected);
+                this.reset(Constants.stateAdminAreaSelected);
                 this.forecastView.clearForecast();
                 view.showError(Constants.areaRequired, false);
-                view.tel(Constants.elCity).focus();
+                // view.tel(Constants.elCity).focus();
                 this.onAdminAreaSelected(value);
             });
 
             this.citySelectionView.onKeyUp(Constants.elCity, 13, (view, value) => {
-                view.reset(Constants.stateCityEntered);
+                this.reset(Constants.stateCityEntered);
                 this.forecastView.clearForecast();
                 this.onCityEntered(value);
             });
@@ -513,6 +510,29 @@
             this.getCountries().then(() => {
                 this.usePreviousSettings();
             });
+        }
+
+        reset(state) {
+            switch (state) {
+                case Constants.stateCountrySelected:
+                    LocalStore.put(this.templateName + Constants.cookieArea, String.empty);
+                    LocalStore.put(this.templateName + Constants.cookieCity, String.empty);
+                    this.citySelectionView.tel(Constants.elCity).value = String.empty;
+                    break;
+
+                case Constants.stateAdminAreaSelected:
+                    LocalStore.put(this.templateName + Constants.cookieCity, String.empty);
+                    this.citySelectionView.tel(Constants.elCity).value = String.empty;
+                    break;
+
+                case Constants.stateCityEntered:
+                    // Nothing happens in this reset state other than the default below.
+                    break;
+            }
+
+            this.citySelectionView.clearErrors();
+            this.citySelectionView.tel(Constants.elSelectCity).style.visibility = Constants.hidden;
+            LocalStore.put(this.templateName + Constants.cookieCityKey, String.empty);
         }
 
         appendAppKey(url) {
@@ -559,7 +579,7 @@
                 this.citySelectionView.showError(Constants.cityNotFound);
             } else if (json.length > 1) {
                 // If we have a cityKey, then don't display the error.
-                let cityKey = LocalStore.get(Constants.cookieCityKey);
+                let cityKey = LocalStore.get(this.templateName + Constants.cookieCityKey);
 
                 if (String.isNullOrEmpty(cityKey)) {
                     this.citySelectionView.showError(Constants.cityMoreThanOne);
@@ -576,23 +596,23 @@
         }
 
         async onCountrySelected(id) {
-            LocalStore.put(Constants.cookieCountry, id);
+            LocalStore.put(this.templateName + Constants.cookieCountry, id);
             await this.getAdminAreas(id);
         }
 
         onAdminAreaSelected(id) {
-            LocalStore.put(Constants.cookieArea, id);
+            LocalStore.put(this.templateName + Constants.cookieArea, id);
         }
 
         onCitySelected(_, key) {
-            LocalStore.put(Constants.cookieCityKey, key);
+            LocalStore.put(this.templateName + Constants.cookieCityKey, key);
             this.getWeather(key);
         }
 
         async onCityEntered(city) {
             let countryId = this.citySelectionView.tel(Constants.elCountries).value;
             let areaId = this.citySelectionView.tel(Constants.elAdminAreas).value;
-            LocalStore.put(Constants.cookieCity, city);
+            LocalStore.put(this.templateName + Constants.cookieCity, city);
             let ok = true;
 
             // Verify selections:
@@ -605,19 +625,19 @@
                 let key = this.verifyCities(cities.json);
 
                 if (key === undefined) {
-                    LocalStore.put(Constants.cookieCityKey, String.empty);
+                    LocalStore.put(this.templateName + Constants.cookieCityKey, String.empty);
                     this.forecastView.clearForecast();
                 } else {
-                    LocalStore.put(Constants.cookieCityKey, key);
+                    LocalStore.put(this.templateName + Constants.cookieCityKey, key);
                     this.getWeather(key);
                 }
             }
         }
 
         usePreviousSettings() {
-            let countryId = LocalStore.get(Constants.cookieCountry);
-            let areaId = LocalStore.get(Constants.cookieArea);
-            let city = LocalStore.get(Constants.cookieCity);
+            let countryId = LocalStore.get(this.templateName + Constants.cookieCountry);
+            let areaId = LocalStore.get(this.templateName + Constants.cookieArea);
+            let city = LocalStore.get(this.templateName + Constants.cookieCity);
 
             if (!String.isNullOrEmpty(city)) {
                 this.citySelectionView.tel(Constants.elCity).value = city;
@@ -626,18 +646,18 @@
             if (!String.isNullOrEmpty(countryId)) {
                 // TODO: Make this a call to set the value.  Getting is fine?, setting should be done by the view.
                 this.citySelectionView.tel(Constants.elCountries).value = countryId;
-                this.onCountrySelected().then(() => {
+                this.onCountrySelected(countryId).then(() => {
                     if (!String.isNullOrEmpty(areaId)) {
                         this.citySelectionView.tel(Constants.elAdminAreas).value = areaId;
 
                         if (!String.isNullOrEmpty(city)) {
-                            this.onCityEntered();
+                            this.onCityEntered(city);
                         }
                     } else {
-                        let cityKey = LocalStore.get(Constants.cookieCityKey);
+                        let cityKey = LocalStore.get(this.templateName + Constants.cookieCityKey);
 
                         if (!String.isNullOrEmpty(cityKey)) {
-                            this.onCityEntered();
+                            this.onCityEntered(city);
                         }
                     }
                 });
@@ -684,8 +704,8 @@
         }
 
         initializeControllers() {
-            this.weatherController1 = new WeatherController(this.citySelectionView1, this.forecastView1);
-            this.weatherController2 = new WeatherController(this.citySelectionView2, this.forecastView2);
+            this.weatherController1 = new WeatherController(AppController.t1, this.citySelectionView1, this.forecastView1);
+            this.weatherController2 = new WeatherController(AppController.t2, this.citySelectionView2, this.forecastView2);
         }
     }
 
