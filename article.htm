@@ -581,37 +581,34 @@ view:</p>
   el(id) { 
     return document.getElementById(id); 
   } 
-
-
-  addTemplate(elName, templateName) {
-    this.el(elName).innerHTML = this.el(templateName).innerHTML;
-  }
 }</pre>
 <p>To demonstrate reuse, we'll refactor the code so that the forecast of two 
-cities can be viewed at the same time for comparison.&nbsp; A proof of concept 
-is achieved by defining where things go and their templates:</p>
-<pre>&lt;div class='frame' id='app'&gt;
-  &lt;table&gt;
-    &lt;tbody&gt;
-      &lt;tr&gt;
-        &lt;td id='city1' /&gt;
-        &lt;td id='city2' /&gt;
-      &lt;/tr&gt;
-      &lt;tr&gt;
-        &lt;td id='forecast1' /&gt;
-        &lt;td id='forecast2' /&gt;
-      &lt;/tr&gt;
-    &lt;/tbody&gt;
-  &lt;/table&gt;
-&lt;/div&gt;
-
-&lt;div class='hidden' ; id='citySelectionTemplate'&gt;
+cities can be viewed side by side at the same time for comparison.&nbsp; A proof of concept 
+is achieved by:</p>
+<ol>
+	<li>Refactoring the country/area/city selection into a template (uh, that 
+	really means hiding it and changing the ID).</li>
+	<li>Defining where the templates go.</li>
+</ol>
+<p>Refactoring the city selection into a template:</p>
+<pre>&lt;div class='hidden' id='citySelectionTemplate'&gt;
   &lt;div&gt;
     &lt;label class='label'&gt;Country:&lt;/label&gt;
     &lt;select id='countries'&gt;&lt;/select&gt;
     &lt;label class='error' id='countryRequired'&gt;Please select a country.&lt;/label&gt;
   &lt;/div&gt;
   ... etc ...</pre>
+<p>Creating a &quot;view&quot; of the side-by-side forecast:</p>
+<pre>&lt;div class='frame' id='app'&gt;
+  &lt;div class=&quot;inline&quot;&gt;
+    &lt;div id=&quot;city1&quot;&gt;&lt;/div&gt;
+    &lt;div id=&quot;forecast1&quot;&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;inline&quot;&gt;
+    &lt;div id=&quot;city2&quot;&gt;&lt;/div&gt;
+    &lt;div id=&quot;forecast2&quot;&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
 <p>Initializing an app controller on page load:</p>
 <pre>(function initialize() {
   let appView = new AppView();
@@ -629,13 +626,19 @@ is achieved by defining where things go and their templates:</p>
     this.view.addTemplate(Constants.elCitySelection2, Constants.elCitySelectionTemplate);
   }
 }</pre>
+<p>And the magic <code>addTemplate</code> function, which is in the base class of view:</p>
+<pre>addTemplate(elName, templateElementName) {
+  let templateHtml = this.el(templateElementName).innerHTML;
+  this.el(elName).innerHTML = templateHtml;
+}</pre>
 <p>Resulting in:</p>
 <p><img border="0" src="w10.png" width="773" height="107"></p>
+<p>Great, we have &quot;proved&quot; the concept.</p>
 <h3>Pesky ID Values</h3>
 <p>Now, the annoying thing is of course that the ID's are no longer unique.&nbsp; 
 So we need a <i>disciplined</i> approach to how we want to handle this.&nbsp; 
 The should-be-obvious solution is to prepend the ID with a template name, and 
-let's be evil about it and use <code>&lt;T&gt;</code> a la C# templates, haha, like this:</p>
+let's be cute about it and use <code>&lt;T&gt;</code> a la C# templates, haha, like this:</p>
 <pre>&lt;div class='hidden' ; id='citySelectionTemplate'&gt;
   &lt;div&gt;
     &lt;label class='label'&gt;Country:&lt;/label&gt;
@@ -643,7 +646,11 @@ let's be evil about it and use <code>&lt;T&gt;</code> a la C# templates, haha, l
     &lt;label class='error' id='&lt;T&gt;countryRequired'&gt;Please select a country.&lt;/label&gt;
   &lt;/div&gt;
   ... etc ...</pre>
-<p>So now we can create our views, passing in the template name and adding the 
+<p>We do this everywhere, so for example, the weather forecast, which is itself 
+a template within the template, includes both the template <code>&lt;T&gt;</code> token and the <code>{n}</code> 
+indexer for each day.&nbsp; Example:</p>
+<pre>&lt;label class='small-font' id='&lt;T&gt;maxTemp{n}'&gt;&lt;/label&gt;</pre>
+<p>Now we can create our views, passing in the template name and adding the 
 desired template to the desired area of our app view:</p>
 <pre>static get t1() { return 't1'; }
 static get t2() { return 't2'; }
@@ -654,7 +661,8 @@ initialize() {
   this.citySelectionView1.addTemplate(Constants.elCitySelection1, Constants.elCitySelectionTemplate);
   this.citySelectionView2.addTemplate(Constants.elCitySelection2, Constants.elCitySelectionTemplate);
 }</pre>
-<p>Refactor the addTemplate code:</p>
+<p>Refactor the <code>addTemplate</code> code so it knows to also handle the <code>&lt;T&gt;</code> 
+token:</p>
 <pre>addTemplate(elName, templateElementName) {
   let templateHtml = this.el(templateElementName).innerHTML;
   templateHtml = String.replaceAll(templateHtml, '&lt;T&gt;', this.templateName);
@@ -663,23 +671,193 @@ initialize() {
 </pre>
 <p>and we get unique ID's:</p>
 <p><img border="0" src="w11.png" width="604" height="126"></p>
+<p>Note that this results in predictable ID naming which is critical for 
+automated testing.</p>
 <p>We also create a templated <code>tel</code> helper to prepend the template name:</p>
 <pre>tel(id) {
   return document.getElementById(this.templateName + id);
 }</pre>
-Next 
-we initialize the controllers:<pre>initializeControllers() {
-  this.weatherController1 = new WeatherController(this.citySelectionView1, this.forecastView1);
-  this.weatherController2 = new WeatherCOntroller(this.citySelectionView2, this.forecastView2);
+<h3>The ViewBase Class</h3>
+<p>This is base class for all views, providing useful view-generic functions.&nbsp; 
+Most importantly, it maintains the template name:</p>
+<pre>class ViewBase {
+  constructor(tname = '') {
+    this.templateName = tname;
+  }
+  ... etc ...</pre>
+<h3>The ControllerBase Class</h3>
+<p>This is a base class for all controllers, and it's sole purpose in life is to 
+maintain the optional <i>primary</i> view associated with the controller.&nbsp; </p>
+<pre>class ControllerBase {
+  constructor(view = null) {
+    this.view = view;
+  }
 }</pre>
-<h3>Events</h3>
-<p>The controller is responsible for wiring up events from the view's DOM to 
-controller methods.&nbsp; In other words, the view doesn't know what the 
-controller wants to get notified about -- the controller knows, so it should be 
-the one responsible to wire up the events in the view's DOM.&nbsp; It does this 
-with some help from the base class view methods:</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
+<h3>The Application Controller</h3>
+<p>An application controller is useful though it really does nothing more than 
+initialization.&nbsp; It doesn't have an associated view, though it could if we 
+had, say, common areas to all pages, like a menu.&nbsp; The application 
+controller provides an important role here in setting up how the weather page 
+will look -- in this case, setting up two controllers with their city selection 
+and forecast views:</p>
+<pre>class AppController extends ControllerBase {
+  constructor() {
+    super();
+  }
+
+  static get t1() { return 't1'; }
+  static get t2() { return 't2'; }
+
+  initialize() {
+    this.initializeViews();
+    this.initializeControllers();
+
+    this.citySelectionView1.initializeElements();
+    this.citySelectionView2.initializeElements();
+
+    this.weatherController1.finishInitialization();
+    this.weatherController2.finishInitialization();
+  }
+
+  initializeViews() {
+    this.citySelectionView1 = new CitySelectionView(AppController.t1);
+    this.citySelectionView2 = new CitySelectionView(AppController.t2);
+    this.citySelectionView1.addTemplate(Constants.elCitySelection1, Constants.elCitySelectionTemplate);
+    this.citySelectionView2.addTemplate(Constants.elCitySelection2, Constants.elCitySelectionTemplate);
+
+    this.forecastView1 = new ForecastView(AppController.t1);
+    this.forecastView2 = new ForecastView(AppController.t2);
+}
+
+  initializeControllers() {
+    this.weatherController1 = new WeatherController(AppController.t1, this.citySelectionView1, this.forecastView1);
+    this.weatherController2 = new WeatherController(AppController.t2, this.citySelectionView2, this.forecastView2);
+  }
+}</pre>
+<h3>The WeatherController Class</h3>
+<p>Because the weather controller is working with two views -- the city 
+selection view and the forecast view -- we don't really have a primary view, so 
+the view in the <code>ControllerBase</code> is not used:</p>
+<pre>class WeatherController extends ControllerBase {
+  constructor(tname, citySelectionView, forecastView) {
+    super();
+    this.templateName = tname;
+    this.citySelectionView = citySelectionView;
+    this.forecastView = forecastView;
+    this.wireUpEvents();
+  }
+  ... etc ...</pre>
+<p>Notice that the controller also gets the template name as a parameter in the 
+constructor.&nbsp; We do this so that each of the two sections can have their 
+own unique store names, which, for example, is used when getting and setting 
+values in the local store:</p>
+<pre>LocalStore.put(this.templateName + Constants.cookieCountry, id);</pre>
+<h3>Events and View Data</h3>
+<p>The controller knows what it wants to be notified about and what data it 
+needs to get from the view and set to the view.&nbsp; But we want to be <i>
+disciplined</i> about this.&nbsp; The view should be responsible for how this 
+happens.&nbsp; The controller should <u>not</u> know about the view 
+implementation--in other words, the controller should not know about the view's 
+DOM.&nbsp; Instead, the view implements methods for wiring up events and getting 
+and setting the data as determined by the actual controls being rendered by the 
+HTML which, amusingly, is completely disconnected from anything about the view.</p>
+<p>Wiring up events is handled in the view base class as they are generic to any 
+view:</p>
+<pre>onKeyUp(id, keyVal, fnc) {
+  let el = this.tel(id);
+  el.onkeyup = (event) =&gt; {
+    this.onKey(event.keyCode, keyVal, () =&gt; fnc(this, el.value));
+  }
+}
+
+onChange(id, fnc) {
+  let el = this.tel(id);
+  el.onchange = () =&gt; fnc(this, el.value);
+}
+
+onKey(keyCode, matchValue, callback) {
+  if (keyCode == matchValue) {
+    callback();
+  }
+}</pre>
+<p>Getting and setting data is handled in the <code>CitySelectionView</code>:</p>
+<pre>clearCitySelection() {
+  this.tel(Constants.elSelectCity).style.visibility = Constants.hidden;
+}
+
+getSelectedCountry() {
+  return this.tel(Constants.elCountries).value;
+}
+
+getSelectedAdminArea() {
+  return this.tel(Constants.elAdminAreas).value;
+}
+
+setCity(cityName) {
+  this.tel(Constants.elCity).value = cityName;
+}
+
+selectCountry(countryId) {
+  this.tel(Constants.elCountries).value = countryId;
+}
+
+selectAdminArea(adminAreaId) {
+  this.tel(Constants.elAdminAreas).value = adminAreaId;
+}
+</pre>
+<p>Javascript doesn't (yet) have a mechanism for declaring a field or a function 
+to be private, so it requires <i>discipline</i> to not access the very public 
+functions of a view.&nbsp; If the controller were to directly manipulate the 
+DOM, then we lose maintainability -- let's say the view wants to use an edit box 
+instead of a dropdown for the country name -- The controller shouldn't know that 
+the view is doing this.&nbsp; This is why even the &quot;show&quot; methods are part of 
+the view (note how the <code>tel</code> function is always used to decode the template name):</p>
+<pre>showCountries(json) {
+  this.clearDropdown(Constants.elCountries);
+  let countries = json.map(item =&gt; { return { name: item.EnglishName, id: item.ID }; })
+    .sort((a, b) =&gt; { return a.name &lt; b.name ? -1 : 1 });
+  let elOptions = this.tel(Constants.elCountries).options;
+  elOptions[0] = new Option(Constants.selectCountry, String.empty);
+  countries.map(item =&gt; { elOptions[elOptions.length] = new Option(item.name, item.id); });
+}</pre>
+<p>We also have a separate forecast view.&nbsp; Notice again how it uses tel to 
+decode the template name for it's DOM:</p>
+<pre>[snipped]
+this.tel(`${Constants.dow}${idx}`).innerHTML = dayOfWeek;
+this.tel(`${Constants.descr}${idx}`).innerHTML = descr;
+this.tel(`${Constants.icon}${idx}`).src = iconUrl;
+this.tel(`${Constants.minTemp}${idx}`).innerHTML = minTemp;
+this.tel(`${Constants.maxTemp}${idx}`).innerHTML = maxTemp;
+this.tel(`${Constants.windSpeed}${idx}`).innerHTML = windSpeed;
+this.tel(`${Constants.windDir}${idx}`).innerHTML = windDirection;
+this.tel(`${Constants.gustSpeed}${idx}`).innerHTML = windGust;
+this.tel(`${Constants.gustDir}${idx}`).innerHTML = windGustDirection;
+this.tel(`${Constants.rain}${idx}`).innerHTML = rain;
+this.tel(`${Constants.snow}${idx}`).innerHTML = snow;
+this.tel(`${Constants.ice}${idx}`).innerHTML = ice;</pre>
+<h3>The End Result</h3>
+<p><img border="0" src="w12sm.png" width="400" height="254"></p>
+<p>At the end of this refactoring, we have:</p>
+<ul>
+	<li>A view for the city selection.</li>
+	<li>A view for the forecast.</li>
+	<li>An application controller for initialization.</li>
+	<li>A weather controller for handling city selection and getting the 
+	weather.</li>
+</ul>
+<p>What's completely missing here is a model:</p>
+<ul>
+	<li>We don't need a model of the AccuWeather JSON structure.&nbsp; At best, 
+	such a model might implement methods to format the data, such as how the 
+	controller is combining wind speed and direction, or temperature and 
+	temperature unit.&nbsp; </li>
+	<li>We don't need a view-model.&nbsp; OK, this could be useful in creating 
+	getter/setter methods for the data that the controller needs to know about, 
+	complete with &quot;change&quot; triggers to update the controller when the view 
+	element changes and update the view element when the controller wants to 
+	change view data.&nbsp; </li>
+</ul>
+<p>In both cases, these add unnecessary complexity for such a simple page.</p>
 <h2>Conclusion</h2>
 <p>What stood out for me the most in writing this code was that, since I wasn't 
 dealing with the complexities of the Angular framework, nor in Part 2 creating a 
@@ -798,8 +976,8 @@ every one of those classes, files, JSON objects, and templates:</p>
 <p>To reiterate, good organization, maintainability, ability to automate 
 testing, and reuse are not features that I've ever seen a framework actually 
 help me with.&nbsp; If I don't have the discipline to write Javascript with the 
-above 4 goals in mind, the framework will not help and in reality often hinders 
-testing.&nbsp; Personally, when I develop websites, my solution is to:</p>
+above 4 goals in mind, the framework will not help and in fact often provides a 
+hinderance.&nbsp; Personally, when I develop websites, my solution is to:</p>
 <ol>
 	<li>Not use any framework 
 at all.</li>
@@ -934,7 +1112,7 @@ well designed web app vs. the constant &quot;how do I do this?&quot; googling th
 one, experience working in a &quot;modern&quot; framework.&nbsp; (Vue excluded since I have 
 no experience with them.)</p>
 <p>In other words, be part of the crowd, not separate from the crowd.&nbsp; Bury 
-your head in the sand.&nbsp; Or if you prefer, &quot;join the dark side.&quot;</p>
+your head in the sand.&nbsp; Or if you prefer, join the dark side.</p>
 <p><img border="0" src="ostrich.jpg" width="367" height="550">
 <img border="0" src="jointhedarkside.jpg" width="277" height="182"></p>
 

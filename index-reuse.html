@@ -65,34 +65,22 @@
     .fixed-layout {
         table-layout: fixed;
     }
+
+    .maxwidth300 {
+        max-width: 300px;
+    }
 </style>
 
 <html>
     <body>
         <div class='frame' id='app'>
             <div class="inline">
-                <table class='fixed-layout'>
-                    <tbody>
-                        <tr>
-                            <td id='city1' />
-                        </tr>
-                        <tr>
-                            <td id='forecast1' />
-                        </tr>
-                    </tbody>
-                </table>
+                <div id="city1"></div>
+                <div id="forecast1"></div>
             </div>
             <div class="inline">
-                <table class='fixed-layout'>
-                    <tbody>
-                        <tr>
-                            <td id='city2' />
-                        </tr>
-                        <tr>
-                            <td id='forecast2' />
-                        </tr>
-                    </tbody>
-                </table>
+                <div id="city2"></div>
+                <div id="forecast2"></div>
             </div>
         </div>
 
@@ -138,9 +126,6 @@
                         <td class='colIcon'>
                             <img id='<T>icon{n}'/>
                         </td>
-                        <td>
-                            <label id='<T>descr{n}'></label>
-                        </td>
                     </tr>
                     <tr>
                         <td>
@@ -172,6 +157,9 @@
                     </tr>
                 </tbody>
             </table>
+            <div class='maxwidth300'>
+                <label id='<T>descr{n}'></label>
+            </div>
         </div>
     </body>
 </html>
@@ -231,7 +219,7 @@
         static get adminAreasUrl() { return 'http://dataservice.accuweather.com/locations/v1/adminareas/'; }
         static get citySearchUrl() { return 'http://dataservice.accuweather.com/locations/v1/cities/{countryId}/search' }
         static get fullCitySearchUrl() { return 'http://dataservice.accuweather.com/locations/v1/cities/{countryId}/{areaId}/search' }
-        static get weatherFiveDayForecastUrl() { return 'http://dataservice.accuweather.com/forecasts/v1/daily/5day/'; }
+        static get weatherFiveDayForecastUrl() { return 'http://dataservice.accuweather.com/forecasts/v1/daily/5day'; }
         static get iconUrl() { return 'https://developer.accuweather.com/sites/default/files/'; }
         static get queryKey() { return 'q'; }
         static get details() {return 'details'; }
@@ -339,14 +327,8 @@
     } 
 
     class ControllerBase {
-        constructor(view) {
+        constructor(view = null) {
             this.view = view;
-        }
-    }
-
-    class AppView extends ViewBase {
-        constructor() {
-            super();
         }
     }
 
@@ -368,9 +350,33 @@
             this.showError(Constants.cityRequired, false);
         }
 
+        clearCitySelection() {
+            this.tel(Constants.elSelectCity).style.visibility = Constants.hidden;
+        }
+
+        getSelectedCountry() {
+            return this.tel(Constants.elCountries).value;
+        }
+
+        getSelectedAdminArea() {
+            return this.tel(Constants.elAdminAreas).value;
+        }
+
+        setCity(cityName) {
+            this.tel(Constants.elCity).value = cityName;
+        }
+
+        selectCountry(countryId) {
+            this.tel(Constants.elCountries).value = countryId;
+        }
+
+        selectAdminArea(adminAreaId) {
+            this.tel(Constants.elAdminAreas).value = adminAreaId;
+        }
+
         showCitySelector(json) {
             this.tel(Constants.elSelectCity).style.visibility = Constants.visible;
-            this.clearDropdown(el(Constants.elCities));
+            this.clearDropdown(Constants.elCities);
 
             // Get some info the user can use to select the desired city, sorted so that cities that don't have parents are shown first.
             let areas = json.map(item => {
@@ -488,7 +494,6 @@
                 this.reset(Constants.stateAdminAreaSelected);
                 this.forecastView.clearForecast();
                 view.showError(Constants.areaRequired, false);
-                // view.tel(Constants.elCity).focus();
                 this.onAdminAreaSelected(value);
             });
 
@@ -517,12 +522,12 @@
                 case Constants.stateCountrySelected:
                     LocalStore.put(this.templateName + Constants.cookieArea, String.empty);
                     LocalStore.put(this.templateName + Constants.cookieCity, String.empty);
-                    this.citySelectionView.tel(Constants.elCity).value = String.empty;
+                    this.citySelectionView.setCity(String.empty);
                     break;
 
                 case Constants.stateAdminAreaSelected:
                     LocalStore.put(this.templateName + Constants.cookieCity, String.empty);
-                    this.citySelectionView.tel(Constants.elCity).value = String.empty;
+                    this.citySelectionView.setCity(String.empty);
                     break;
 
                 case Constants.stateCityEntered:
@@ -531,7 +536,7 @@
             }
 
             this.citySelectionView.clearErrors();
-            this.citySelectionView.tel(Constants.elSelectCity).style.visibility = Constants.hidden;
+            this.citySelectionView.clearCitySelection();
             LocalStore.put(this.templateName + Constants.cookieCityKey, String.empty);
         }
 
@@ -604,14 +609,14 @@
             LocalStore.put(this.templateName + Constants.cookieArea, id);
         }
 
-        onCitySelected(_, key) {
+        onCitySelected(key) {
             LocalStore.put(this.templateName + Constants.cookieCityKey, key);
             this.getWeather(key);
         }
 
         async onCityEntered(city) {
-            let countryId = this.citySelectionView.tel(Constants.elCountries).value;
-            let areaId = this.citySelectionView.tel(Constants.elAdminAreas).value;
+            let countryId = this.citySelectionView.getSelectedCountry();
+            let areaId = this.citySelectionView.getSelectedAdminArea();
             LocalStore.put(this.templateName + Constants.cookieCity, city);
             let ok = true;
 
@@ -640,15 +645,14 @@
             let city = LocalStore.get(this.templateName + Constants.cookieCity);
 
             if (!String.isNullOrEmpty(city)) {
-                this.citySelectionView.tel(Constants.elCity).value = city;
+                this.citySelectionView.setCity(city);
             }
 
             if (!String.isNullOrEmpty(countryId)) {
-                // TODO: Make this a call to set the value.  Getting is fine?, setting should be done by the view.
-                this.citySelectionView.tel(Constants.elCountries).value = countryId;
+                this.citySelectionView.selectCountry(countryId);
                 this.onCountrySelected(countryId).then(() => {
                     if (!String.isNullOrEmpty(areaId)) {
-                        this.citySelectionView.tel(Constants.elAdminAreas).value = areaId;
+                        this.citySelectionView.selectAdminArea(areaId);
 
                         if (!String.isNullOrEmpty(city)) {
                             this.onCityEntered(city);
@@ -667,6 +671,7 @@
         async getWeather(key) {
             let url = this.appendAppKey(`${Constants.weatherFiveDayForecastUrl}/${key}`);
             url = this.addParam(url, Constants.details, String.true);
+            console.log(url);
             let forecast = await Helpers.get(url);
             let dailyForecasts = forecast.json.DailyForecasts;
             this.forecastView.clearForecast();
@@ -675,8 +680,8 @@
     }
 
     class AppController extends ControllerBase {
-        constructor(appView) {
-            super(appView);
+        constructor() {
+            super();
         }
 
         static get t1() { return 't1'; }
@@ -737,8 +742,7 @@
     }
 
     (function initialize() {
-        let appView = new AppView();
-        let appController = new AppController(appView);
+        let appController = new AppController();
         appController.initialize();
     })();
     
