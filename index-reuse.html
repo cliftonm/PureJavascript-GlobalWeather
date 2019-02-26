@@ -39,7 +39,6 @@
 
     .error {
         color: red;
-        visibility: hidden;
     }
 
     .dayForecast {
@@ -52,6 +51,12 @@
 
     .hidden {
         visibility: hidden;
+        display: none;
+    }
+
+    .visible {
+        visibility: visible;
+        display: inline;      
     }
 
     .colDayOfWeek {
@@ -69,42 +74,65 @@
     .maxwidth300 {
         max-width: 300px;
     }
+
+    .padding-left30 {
+        padding-left: 30px;
+    }
+
+    .va-top {
+        vertical-align: top;
+    }
 </style>
 
 <html>
     <body>
+        <div>
+            <button id="clearSelections">Clear Selections</button>
+        </div>
         <div class='frame' id='app'>
-            <div class="inline">
-                <div id="city1"></div>
-                <div id="forecast1"></div>
-            </div>
-            <div class="inline">
-                <div id="city2"></div>
-                <div id="forecast2"></div>
-            </div>
+            <table>
+                <tbody>
+                    <tr>
+                        <td class="va-top">
+                            <div id="city1"></div>
+                        </td>
+                        <td class="va-top padding-left30">
+                            <div id="city2"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div id="forecast1"></div>
+                        </td>
+                        <td>
+                            <div id="forecast2"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
         <div class='hidden' id='citySelectionTemplate'>
             <div>
+                <label class='error hidden' id='<T>countryRequired'>Please select a country.<br/></label>
                 <label class='label'>Country:</label>
                 <select id='<T>countries'></select>
-                <label class='error' id='<T>countryRequired'>Please select a country.</label>
             </div>
 
             <div class='vspacer10'>
+                <label class='error hidden' id='<T>areaRequired'>Please select an area.<br/></label>
                 <label class='label'>Admin Area:</label>
                 <select id='<T>adminAreas'></select>
-                <label class='error' id='<T>areaRequired'>Please select an area.</label>
             </div>
 
             <div class='vspacer10'></div>
 
             <div>
+                <label class='error hidden' id='<T>cityMoreThanOne'>More than one city found!<br/></label>
+                <label class='error hidden' id='<T>cityRequired'>Please enter a city.<br/></label>
+                <label class='error hidden' id='<T>cityNotFound'>City not found!<br/></label>
                 <label class='label'>City / Town:</label>
                 <input id='<T>city'>
-                <label class='error' id='<T>cityRequired'>Please enter a city.</label>
-                <label class='error' id='<T>cityNotFound'>City not found!</label>
-                <label class='error' id='<T>cityMoreThanOne'>More than one city found!</label>
             </div>
 
             <div class='hidden vspacer10' id='<T>selectCity'>
@@ -251,6 +279,7 @@
         static get elCity() { return 'city'; }
         static get elForecastTemplate() { return 'forecastTemplate'; }
         static get elForecastContainer() { return 'forecastContainer'; }
+        static get elClearSelections() { return 'clearSelections'; }
 
         static get elSelectCity() {return 'selectCity'; }
         static get elCities() { return 'cities'; }
@@ -307,6 +336,11 @@
             this.tel(id).focus();
         }
 
+        onClick(id, fnc) {
+            let el = this.tel(id);
+            el.onclick = () => fnc(this);
+        }
+
         onKeyUp(id, keyVal, fnc) {
             let el = this.tel(id);
             el.onkeyup = (event) => {
@@ -343,15 +377,16 @@
         }
 
         clearErrors() {
-            this.showError(Constants.countryRequired, false);
-            this.showError(Constants.areaRequired, false);
-            this.showError(Constants.cityNotFound, false);
-            this.showError(Constants.cityMoreThanOne, false);
-            this.showError(Constants.cityRequired, false);
+            this.hide(Constants.countryRequired);
+            this.hide(Constants.countryRequired);
+            this.hide(Constants.areaRequired);
+            this.hide(Constants.cityNotFound);
+            this.hide(Constants.cityMoreThanOne);
+            this.hide(Constants.cityRequired);
         }
 
         clearCitySelection() {
-            this.tel(Constants.elSelectCity).style.visibility = Constants.hidden;
+            this.hide(Constants.elSelectCity);
         }
 
         getSelectedCountry() {
@@ -374,8 +409,20 @@
             this.tel(Constants.elAdminAreas).value = adminAreaId;
         }
 
+        show(id) {
+            let options = this.tel(id).className;
+            options = options.replace(Constants.hidden, Constants.visible);
+            this.tel(id).className = options;
+        }
+
+        hide(id) {
+            let options = this.tel(id).className;
+            options = options.replace(Constants.visible, Constants.hidden);
+            this.tel(id).className = options;
+        }
+
         showCitySelector(json) {
-            this.tel(Constants.elSelectCity).style.visibility = Constants.visible;
+            this.show(Constants.elSelectCity);
             this.clearDropdown(Constants.elCities);
 
             // Get some info the user can use to select the desired city, sorted so that cities that don't have parents are shown first.
@@ -401,7 +448,7 @@
         }
 
         showError(elId, state = true) {
-            this.tel(elId).style.visibility = state ? Constants.visible : Constants.hidden;
+            state ? this.show(elId) : this.hide(elId);
 
             return !state;
         }
@@ -679,9 +726,15 @@
         }
     }
 
-    class AppController extends ControllerBase {
+    class AppView extends ViewBase {
         constructor() {
             super();
+        }
+    }
+
+    class AppController extends ControllerBase {
+        constructor(view) {
+            super(view);
         }
 
         static get t1() { return 't1'; }
@@ -696,6 +749,15 @@
 
             this.weatherController1.finishInitialization();
             this.weatherController2.finishInitialization();
+
+            this.view.onClick(Constants.elClearSelections, () => this.clearSelections());
+        }
+
+        clearSelections() {
+            this.weatherController1.reset(Constants.stateCountrySelected);
+            this.weatherController2.reset(Constants.stateCountrySelected);
+            this.forecastView1.clearForecast();
+            this.forecastView2.clearForecast();
         }
 
         initializeViews() {
@@ -742,7 +804,7 @@
     }
 
     (function initialize() {
-        let appController = new AppController();
+        let appController = new AppController(new AppView());
         appController.initialize();
     })();
     
