@@ -9,9 +9,55 @@
 <body>
 
 <p>Web Frameworks - A Solution Looking for a Problem?</p>
-<!-- INSERT contents -->
+<p><img border="0" src="screenshot2.png" width="341" height="161"></p>
+<h2>Contents</h2><ul>
+<li><a href="#Introduction0">Introduction</a></li>
+<li><a href="#LettheDe-StructuringBegin1">Let the De-Structuring Begin!</a></li>
+<ul>
+<li><a href="#WhatWeDon'tNeed2">What We Don't Need</a></li>
+<li><a href="#TheUserInterface3">The User Interface</a></li>
+<li><a href="#WhatWeDon'tNeed4">What We Don't Need</a></li>
+<li><a href="#GettingCountries5">Getting Countries</a></li>
+<li><a href="#GettingAdminAreas6">Getting Admin Areas</a></li>
+<li><a href="#VerifytheCity7">Verify the City</a></li>
+<li><a href="#WhatWeDon'tNeed8">What We Don't Need</a></li>
+<li><a href="#GetandDisplayWeather9">Get and Display Weather</a></li>
+</ul>
+<li><a href="#EndofPartI10">End of Part I</a></li>
+<li><a href="#PartII-SavingandRestoringSelections11">Part II - Saving and Restoring Selections</a></li>
+<li><a href="#BellsandWhistles12">Bells and Whistles</a></li>
+<ul>
+<li><a href="#GetCitiesandSelectingMoreThanoneMatch13">Get Cities and Selecting More Than one Match</a></li>
+<li><a href="#OptionalAdminArea14">Optional Admin Area</a></li>
+<li><a href="#ResettingtheUI15">Resetting the UI</a></li>
+</ul>
+<li><a href="#PartIII-Reuse16">Part III - Reuse</a></li>
+<ul>
+<li><a href="#PeskyIDValues17">Pesky ID Values</a></li>
+<li><a href="#TheViewBaseClass18">The ViewBase Class</a></li>
+<li><a href="#TheControllerBaseClass19">The ControllerBase Class</a></li>
+<li><a href="#TheApplicationController20">The Application Controller</a></li>
+<li><a href="#TheWeatherControllerClass21">The WeatherController Class</a></li>
+<li><a href="#EventsandViewData22">Events and View Data</a></li>
+<li><a href="#TheEndResult23">The End Result</a></li>
+</ul>
+<li><a href="#Conclusion24">Conclusion</a></li>
+<ul>
+<li><a href="#DisciplineoverFrameworks25">Discipline over Frameworks</a></li>
+<ul>
+<li><a href="#AnexampleoftestautomationissuesinExtJS26">An example of test automation issues in ExtJS</a></li>
+<li><a href="#ExperienceLeadstoDiscipline27">Experience Leads to Discipline</a></li>
+</ul>
+<li><a href="#CutandPasteistheNumberOneKillerMaintainability28">Cut and Paste is the Number One Killer Maintainability</a></li>
+<li><a href="#WilltheRealModelPleaseStandUp29">Will the Real Model Please Stand Up?</a></li>
+<li><a href="#MySolution30">My Solution</a></li>
+<li><a href="#MyStyleGuidelines31">My Style Guidelines</a></li>
+<li><a href="#FinalWords32">Final Words</a></li>
+</ul>
+</ul>
+
 <p></p>
-<h2>Introduction</h2>
+<h2><a name="Introduction0">Introduction</a></h2>
 <p>I quite enjoyed Fred Song's articles here on Code Project:</p>
 <p>
 <a href="https://www.codeproject.com/Articles/1274513/Angular-7-with-NET-Core-2-2-Global-Weather-Part-1">
@@ -42,25 +88,10 @@ we have these web frameworks:</p>
 <p>And the selling points of all of these frameworks is that they are &quot;reactive&quot; 
 -- when the data changes, all the places on the page where the data is used is 
 automatically updated.</p>
-<h3>About the Download</h3>
-<p>The download has two files:</p>
-<ul>
-	<li>index.html</li>
-	<li>index-reuse.html</li>
-</ul>
-<p>The first file is a single weather report, the second file is a refactoring 
-into view and controller classes to demonstrate reuse.</p>
-<p>In both files, set the AccuWeather API key to the key provided by their 
-<a href="https://developer.accuweather.com/user">registration process</a>:</p>
-<pre>class Constants {
-  static get apiKey() { return '[your key]'; }
-  ... etc ...
-</pre>
-<p>&nbsp;</p>
-<h2>Let the De-Structuring Begin!</h2>
+<h2><a name="LettheDe-StructuringBegin1">Let the De-Structuring Begin!</a></h2>
 <p>Fire up notepad (or your favorite HTML editor) and let's start with 
 <a href="https://www.codeproject.com/Articles/1274513/Angular-7-with-NET-Core-2-2-Global-Weather-Part-1">Part I of the Global Weather article</a>!</p>
-<h3>What We Don't Need</h3>
+<h3><a name="WhatWeDon'tNeed2">What We Don't Need</a></h3>
 <p>Here's what we don't need to do:</p>
 <ol>
 	<li>Install Node JS so we get npm</li>
@@ -81,7 +112,7 @@ into view and controller classes to demonstrate reuse.</p>
 </ol>
 <p>Having eliminated all the above steps, I'm more than 1/3 of the way through 
 the article where we finally get to creating the HTML for the form.&nbsp; </p>
-<h3>The User Interface</h3>
+<h3><a name="TheUserInterface3">The User Interface</a></h3>
 <p>I actually don't really like forms.&nbsp; So my HTML looks like this:</p>
 <pre>&lt;div class='frame'&gt;
   &lt;div&gt;
@@ -106,7 +137,7 @@ the article where we finally get to creating the HTML for the form.&nbsp; </p>
 <p><img border="0" src="w1.png" width="408" height="95"></p>
 		<p>This looks a bit different from Fred Song's (let me reiterate, 
 		excellent) article, for reasons we'll see later.</p>
-<h3>What We Don't Need</h3>
+<h3><a name="WhatWeDon'tNeed4">What We Don't Need</a></h3>
 <ul>
 	<li>Bootstrap.&nbsp; Especially installing it with npm.&nbsp; </li>
 </ul>
@@ -125,7 +156,7 @@ out the browser window because suddenly everything is so BIG.</p>
 	<li>Angular service</li>
 	<li>Angular HttpClient</li>
 </ul>
-<h3>Getting Countries</h3>
+<h3><a name="GettingCountries5">Getting Countries</a></h3>
 <p>We're now half way through Song's article and we're ready to get a list of 
 countries.</p>
 <p>First, let's set up a poor man's &quot;let's get things rolling&quot; function.&nbsp; I 
@@ -204,7 +235,7 @@ W3Schools.com here</a> which uses a textbox to show you what you're typing along
 with a separate dropdown list.&nbsp; I decided I'm not actually keen on 
 implementing it because as mentioned, the dropdown already implements 
 auto-complete.</p>
-<h3>Getting Admin Areas</h3>
+<h3><a name="GettingAdminAreas6">Getting Admin Areas</a></h3>
 <p>One of the things I discovered with the AccuWeather API is that it has the 
 concept of an &quot;admin area.&quot;&nbsp; For the United States, the admin areas are the 
 states.&nbsp; For Australia, the admin areas are the territories and states.&nbsp; 
@@ -253,7 +284,7 @@ function showAdminAreas(json) {
 }</pre>
 <p>Now, after selecting the country, we get the admin areas:</p>
 <p><img border="0" src="w4.png" width="182" height="343"></p>
-<h3>Verify the City</h3>
+<h3><a name="VerifytheCity7">Verify the City</a></h3>
 <p>The initial behavior that I implemented simply displays and error message if 
 more than one city in the country and admin area is found:</p>
 <p><img border="0" src="w5.png" width="693" height="93"></p>
@@ -322,14 +353,14 @@ function onKey(keyCode, matchValue, callback) {
 <p>Notice I use a callback for <code>onKey</code> -- here a callback is appropriate.&nbsp; 
 It's not an async event, it's a <i>condition</i> that if met results in the 
 callback.</p>
-		<h3>What We Don't Need</h3>
+		<h3><a name="WhatWeDon'tNeed8">What We Don't Need</a></h3>
 <p>Models!&nbsp; We don't need models of the returned countries, admin areas, or 
 weather data because guess what, the JSON <i>is</i> the model!&nbsp; Why are we 
 mapping the resulting JSON to the model when it's already in JSON?&nbsp; That's 
 called CWDN - Computation We Don't Need.&nbsp; So let's skip down to about 3/4 
 of the way to the bottom of Song's article and drop the weather data into a 
 container using a template to describe how it looks.</p>
-<h3>Get and Display Weather</h3>
+<h3><a name="GetandDisplayWeather9">Get and Display Weather</a></h3>
 <p>First, let's create a container for the weather data:</p>
 <pre>&lt;div id='forecastContainer'&gt;
 &lt;/div&gt;</pre>
@@ -429,7 +460,7 @@ function showForecast(forecast, idx) {
 }</pre>
 <p>And the result is:</p>
 <p><img border="0" src="wfinal.png" width="903" height="745"></p>
-<h2>End of Part I</h2>
+<h2><a name="EndofPartI10">End of Part I</a></h2>
 <p>That concludes Part I.&nbsp; We have:</p>
 <ul>
 	<li>Eliminated Angular</li>
@@ -439,7 +470,7 @@ function showForecast(forecast, idx) {
 <p>Also, we've created an application that doesn't require a server -- it can be 
 loaded as file in Chrome!</p>
 <p><img border="0" src="w6.png" width="422" height="35"></p>
-<h2>Part II - Saving and Restoring Selections</h2>
+<h2><a name="PartII-SavingandRestoringSelections11">Part II - Saving and Restoring Selections</a></h2>
 <p>Song's second article is entirely devoted to saving and restoring the user's 
 selection in the back end.&nbsp; Again, this is an excellent introduction in how 
 ASP.NET Core works with Angular.&nbsp; I have no complaints!&nbsp; But for our 
@@ -512,13 +543,13 @@ if (key === undefined) {
   LocalStore.put(Constants.cookieCityKey, key);
   getWeather(key);
 }</pre>
-<h2>Bells and Whistles</h2>
-<h3>Get Cities and Selecting More Than one Match</h3>
+<h2><a name="BellsandWhistles12">Bells and Whistles</a></h2>
+<h3><a name="GetCitiesandSelectingMoreThanoneMatch13">Get Cities and Selecting More Than one Match</a></h3>
 <p>In the case when there is more than one matching city in the country or the 
 country and admin area, we present a list of cities from which the user must 
 choose:</p>
 <p><img border="0" src="w7.png" width="711" height="228"></p>
-<h3>Optional Admin Area</h3>
+<h3><a name="OptionalAdminArea14">Optional Admin Area</a></h3>
 <p>In the example in Song's article, there is only one Melbourne in all of 
 Australia, so the user can omit selecting the admin area:</p>
 <p><img border="0" src="w8.png" width="430" height="255"></p>
@@ -526,7 +557,7 @@ Australia, so the user can omit selecting the admin area:</p>
 country, the &quot;select the city&quot; dropdown appears so the user can narrow down the 
 search:</p>
 <p><img border="0" src="w9.png" width="712" height="353"></p>
-<h3>Resetting the UI</h3>
+<h3><a name="ResettingtheUI15">Resetting the UI</a></h3>
 <p>Whenever a new country or admin area is selected, we want to clear the 
 relevant sections and error notices.&nbsp; The city key is also reset in the 
 store because no city has been selected, and refreshing the browser should not 
@@ -558,7 +589,7 @@ display any new forecast.&nbsp; This is handled by the <code>reset</code> functi
   el(Constants.elForecastContainer).innerHTML = String.empty;
   LocalStore.put(Constants.cookieCityKey, String.empty);
 }</pre>
-<h2>Part III - Reuse</h2>
+<h2><a name="PartIII-Reuse16">Part III - Reuse</a></h2>
 <p>OK, I can't help myself -- it should be obvious that the above code is not 
 reusable.&nbsp; Furthermore, there's no separation of the view and controller, 
 the very thing that the Vue tutorial video points out as being an issue when 
@@ -651,7 +682,7 @@ is achieved by:</p>
 <p>Resulting in:</p>
 <p><img border="0" src="w10.png" width="773" height="107"></p>
 <p>Great, we have &quot;proved&quot; the concept.</p>
-<h3>Pesky ID Values</h3>
+<h3><a name="PeskyIDValues17">Pesky ID Values</a></h3>
 <p>Now, the annoying thing is of course that the ID's are no longer unique.&nbsp; 
 So we need a <i>disciplined</i> approach to how we want to handle this.&nbsp; 
 The should-be-obvious solution is to prepend the ID with a template name, and 
@@ -694,7 +725,7 @@ automated testing.</p>
 <pre>tel(id) {
   return document.getElementById(this.templateName + id);
 }</pre>
-<h3>The ViewBase Class</h3>
+<h3><a name="TheViewBaseClass18">The ViewBase Class</a></h3>
 <p>This is base class for all views, providing useful view-generic functions.&nbsp; 
 Most importantly, it maintains the template name:</p>
 <pre>class ViewBase {
@@ -702,7 +733,7 @@ Most importantly, it maintains the template name:</p>
     this.templateName = tname;
   }
   ... etc ...</pre>
-<h3>The ControllerBase Class</h3>
+<h3><a name="TheControllerBaseClass19">The ControllerBase Class</a></h3>
 <p>This is a base class for all controllers, and it's sole purpose in life is to 
 maintain the optional <i>primary</i> view associated with the controller.&nbsp; </p>
 <pre>class ControllerBase {
@@ -710,7 +741,7 @@ maintain the optional <i>primary</i> view associated with the controller.&nbsp; 
     this.view = view;
   }
 }</pre>
-<h3>The Application Controller</h3>
+<h3><a name="TheApplicationController20">The Application Controller</a></h3>
 <p>An application controller is useful though it really does nothing more than 
 initialization.&nbsp; It doesn't have an associated view, though it could if we 
 had, say, common areas to all pages, like a menu.&nbsp; The application 
@@ -751,7 +782,7 @@ and forecast views:</p>
     this.weatherController2 = new WeatherController(AppController.t2, this.citySelectionView2, this.forecastView2);
   }
 }</pre>
-<h3>The WeatherController Class</h3>
+<h3><a name="TheWeatherControllerClass21">The WeatherController Class</a></h3>
 <p>Because the weather controller is working with two views -- the city 
 selection view and the forecast view -- we don't really have a primary view, so 
 the view in the <code>ControllerBase</code> is not used:</p>
@@ -769,7 +800,7 @@ constructor.&nbsp; We do this so that each of the two sections can have their
 own unique store names, which, for example, is used when getting and setting 
 values in the local store:</p>
 <pre>LocalStore.put(this.templateName + Constants.cookieCountry, id);</pre>
-<h3>Events and View Data</h3>
+<h3><a name="EventsandViewData22">Events and View Data</a></h3>
 <p>The controller knows what it wants to be notified about and what data it 
 needs to get from the view and set to the view.&nbsp; But we want to be <i>
 disciplined</i> about this.&nbsp; The view should be responsible for how this 
@@ -852,7 +883,7 @@ this.tel(`${Constants.gustDir}${idx}`).innerHTML = windGustDirection;
 this.tel(`${Constants.rain}${idx}`).innerHTML = rain;
 this.tel(`${Constants.snow}${idx}`).innerHTML = snow;
 this.tel(`${Constants.ice}${idx}`).innerHTML = ice;</pre>
-<h3>The End Result</h3>
+<h3><a name="TheEndResult23">The End Result</a></h3>
 <p><img border="0" src="w12sm.png" width="400" height="254"></p>
 <p>At the end of this refactoring, we have:</p>
 <ul>
@@ -875,7 +906,7 @@ this.tel(`${Constants.ice}${idx}`).innerHTML = ice;</pre>
 	change view data.&nbsp; </li>
 </ul>
 <p>In both cases, these add unnecessary complexity for such a simple page.</p>
-<h2>Conclusion</h2>
+<h2><a name="Conclusion24">Conclusion</a></h2>
 <p>What stood out for me the most in writing this code was that, since I wasn't 
 dealing with the complexities of the Angular framework, nor in Part 2 creating a 
 backing database, endpoints, etc., I was instead able to pay more attention to 
@@ -891,7 +922,7 @@ meaningful user experience behaviors?&nbsp; How often do we overlook a simple
 solution and instead implement something more complicated that ends up having 
 its own edge cases and often enough complicates the UX?&nbsp; Personally, I 
 like to choose the UX every time over the &quot;ooh, look, I used framework X.&quot;&nbsp; </p>
-<h3>Discipline over Frameworks</h3>
+<h3><a name="DisciplineoverFrameworks25">Discipline over Frameworks</a></h3>
 <p>It takes discipline, not frameworks, to achieve the above 4 goals, and in my 
 experience, that discipline is almost always lacking.&nbsp; Instead, I see:</p>
 <ol>
@@ -933,7 +964,7 @@ experience, that discipline is almost always lacking.&nbsp; Instead, I see:</p>
 	are the most common, sometimes there are elements in certain pages that are 
 	reused in other pages.</li>
 </ol>
-<h4>An example of test automation issues in ExtJS</h4>
+<h4><a name="AnexampleoftestautomationissuesinExtJS26">An example of test automation issues in ExtJS</a></h4>
 <p>This is the mangled ID that ExtJS created for the input box in a &quot;dialog&quot; 
 form:</p>
 <pre>&lt;input id=&quot;combo-2365-inputEl&quot;</pre>
@@ -942,7 +973,7 @@ form:</p>
 <p>Notice the number changed!&nbsp; How can I write an automated test script 
 when the element's ID is 1) arbitrary and 2) has no relationship to the &quot;id&quot; 
 that I gave it in the definition of the form?</p>
-<h4>Experience Leads to Discipline</h4>
+<h4><a name="ExperienceLeadstoDiscipline27">Experience Leads to Discipline</a></h4>
 <p>You can't just start with discipline.&nbsp; I'm a firm believer that it takes 
 experience (sometimes years of experience) in doing things the &quot;wrong&quot; way to 
 discover the &quot;better&quot; way and incorporate those lessons into a discipline.&nbsp; 
@@ -952,7 +983,7 @@ time to become a master in these technologies?&nbsp; When does the developer
 have time to gain enough experience with something to apply some discipline?&nbsp; 
 We are, in my opinion, doing a disservice to ourselves by this rapid change, and 
 again in my opinion, open source is largely to blame for this.</p>
-<h3>Cut and Paste is the Number One Killer Maintainability</h3>
+<h3><a name="CutandPasteistheNumberOneKillerMaintainability28">Cut and Paste is the Number One Killer Maintainability</a></h3>
 <p>I see this all the time:</p>
 <ol>
 	<li>I have some HTML where 90% of it can be reused but I have to make small 
@@ -968,7 +999,7 @@ more general purpose, it's easier, faster, and gets the change delivered quicker
 simply by copy &amp; pasting.&nbsp; There's no discipline in that.&nbsp; Do that 
 enough times, and your single page app, which loads <i>everything</i> up front, 
 becomes slower and slower, even with minimization and content compressing.</p>
-<h3>Will the Real Model Please Stand Up?</h3>
+<h3><a name="WilltheRealModelPleaseStandUp29">Will the Real Model Please Stand Up?</a></h3>
 <p>In my opinion, the overhead of sheer typing is outrageous.&nbsp; We:</p>
 <ol>
 	<li>Start with the database schema</li>
@@ -989,27 +1020,12 @@ every one of those classes, files, JSON objects, and templates:</p>
 	schema) changes, you are required to manual update all the intermediary 
 	models. </li>
 </ol>
-<h3>Beware of &quot;All-In&quot; Frameworks</h3>
-<p>Frameworks like ExtJS are what I call &quot;all-in&quot; frameworks.&nbsp; You have to 
-bet everything on the fact that the framework will do everything you need it to 
-do, including the UI rendering, and you'll probably not be able to use third 
-party components that integrate well with the framework unless the third party 
-builds their components specifically for that framework.&nbsp; I like to use
-<a href="https://www.jqwidgets.com/">jqWidgets</a> -- I think it's an excellent 
-set of UI controls and is continually being updated -- however notice what they 
-support: &quot;jQWidgets UI for Angular, Vue, React, HTML5, jQuery and Javascript.&quot;&nbsp; 
-No <a href="https://www.sencha.com/products/extjs/">ExtJS</a>.&nbsp; No
-<a href="https://www.meteor.com/">Meteor</a>,
-<a href="https://www.emberjs.com/">Ember</a>, <a href="https://mithril.js.org/">
-Mithril</a>, <a href="https://www.polymer-project.org/">Polymar</a>,
-<a href="https://aurelia.io/">Aurelia</a>, <a href="http://backbonejs.org/">
-Backbone</a>.&nbsp; Those seem to be the popular ones at the moment.</p>
-<h3>My Solution</h3>
+<h3><a name="MySolution30">My Solution</a></h3>
 <p>To reiterate, good organization, maintainability, ability to automate 
 testing, and reuse are not features that I've ever seen a framework actually 
 help me with.&nbsp; If I don't have the discipline to write Javascript with the 
 above 4 goals in mind, the framework will not help and in fact often provides a 
-hindrance.&nbsp; Personally, when I develop websites, my solution is to:</p>
+hinderance.&nbsp; Personally, when I develop websites, my solution is to:</p>
 <ol>
 	<li>Not use any framework 
 at all.</li>
@@ -1023,7 +1039,7 @@ at all.</li>
 	the table, or specific fields are updated either as they change or when the 
 	user clicks on &quot;Update.&quot;&nbsp; Different endpoints for different purposes.</li>
 </ol>
-<h3>My Style Guidelines</h3>
+<h3><a name="MyStyleGuidelines31">My Style Guidelines</a></h3>
 <p>I also try to adhere to my own style guidelines.&nbsp; These are my own 
 guidelines and I'm just telling you what they are, not trying to foist them on 
 you.</p>
@@ -1127,7 +1143,7 @@ matching items into those arrays.</p>
   return newUrl;
 }</pre>
 <p>And that was a simple example.</p>
-<h3>Final Words</h3>
+<h3><a name="FinalWords32">Final Words</a></h3>
 <p>Granted, not being able to put frameworks X, Y, and Z on your resume results 
 in two things:</p>
 <ol>
